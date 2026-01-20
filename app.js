@@ -100,9 +100,22 @@ const store = createStore({
 });
 
 // ==================== UTILITY FUNCTIONS ====================
+let toastTimer = null;
 const showToast = (message, type = 'info') => {
+  // Clear previous toast timer to avoid overlap / race conditions
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+
+  // Show latest toast
   store.setState({ toast: { message, type } });
-  setTimeout(() => store.setState({ toast: null }), 3000);
+
+  // Auto-hide after 3s
+  toastTimer = setTimeout(() => {
+    store.setState({ toast: null });
+    toastTimer = null;
+  }, 3000);
 };
 
 let autoArgumentTimer = null;
@@ -1169,7 +1182,7 @@ const renderHomePage = () => {
   const expProgress = (scholar.exp / expNeeded) * 100;
 
   return `
-        <div class="min-h-full p-6 animate-fade-in">
+        <div class="min-h-full p-6">
           <div class="max-w-6xl mx-auto">
             <div class="text-center mb-8 relative">
               <button onclick="resetGame()" class="absolute top-0 right-0 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
@@ -1366,7 +1379,7 @@ const renderStudyingPage = () => {
   const currentMonthName = monthNames[state.currentMonth] || 'Tháng đầu tiên';
 
   return `
-        <div class="min-h-full p-6 animate-fade-in">
+        <div class="min-h-full p-6">
           <div class="max-w-4xl mx-auto">
             <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/40 mb-6 shadow-xl">
               <div class="flex items-center justify-between mb-4">
@@ -1530,7 +1543,7 @@ const renderDebatePage = () => {
   const stats = getScholarStats();
 
   return `
-        <div class="min-h-full p-6 animate-fade-in flex items-center justify-center">
+        <div class="min-h-full p-6 flex items-center justify-center">
           <div class="max-w-4xl w-full">
             <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
               <div class="text-center mb-6">
@@ -1632,7 +1645,7 @@ const renderInventoryPage = () => {
   const landmarks = Object.entries(inventory).filter(([id]) => gameData.items[id].type === 'landmark');
 
   return `
-        <div class="min-h-full p-6 animate-fade-in">
+        <div class="min-h-full p-6">
           <div class="max-w-6xl mx-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-2xl font-bold flex items-center gap-2">
@@ -1853,7 +1866,7 @@ const renderCraftingPage = () => {
   const consumables = craftableItems.filter(([, item]) => item.type === 'consumable');
 
   return `
-        <div class="min-h-full p-6 animate-fade-in">
+        <div class="min-h-full p-6">
           <div class="max-w-6xl mx-auto">
             <div class="flex items-center justify-between mb-6">
               <h2 class="text-2xl font-bold flex items-center gap-2">
@@ -2010,8 +2023,8 @@ const renderQuizModal = () => {
   const { quiz } = state;
 
   return `
-        <div class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in">
-          <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-amber-500/50 max-w-2xl w-full animate-glow shadow-2xl">
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-amber-500/50 max-w-2xl w-full shadow-2xl">
             <div class="text-center mb-6">
               <span class="text-6xl block mb-4">${quiz.isFinal ? '🏆' : '❓'}</span>
               <h3 class="text-2xl font-bold mb-2">${quiz.isFinal ? 'Câu hỏi tổng kết!' : 'Kiểm tra kiến thức'}</h3>
@@ -2054,7 +2067,7 @@ const renderLearningQuizModal = () => {
   const question = quiz.question;
 
   return `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-amber-500/50 max-w-2xl w-full shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-4">📚</div>
@@ -2097,7 +2110,7 @@ const renderDebateQuizModal = () => {
   const question = quiz.question;
 
   return `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500/50 max-w-2xl w-full shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-4">🏆</div>
@@ -2156,7 +2169,7 @@ const renderGameOverPage = () => {
     : 'Rút lui khỏi Boss';
   
   return `
-        <div class="min-h-full p-6 animate-fade-in bg-gradient-to-br from-red-950 via-slate-900 to-red-950">
+        <div class="min-h-full p-6 bg-gradient-to-br from-red-950 via-slate-900 to-red-950">
           <div class="max-w-4xl mx-auto">
             <div class="text-center mb-8">
               <div class="text-8xl mb-4">💀</div>
