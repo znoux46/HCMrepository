@@ -777,6 +777,256 @@ window.gameData = {
       question: "Để vận dụng tư tưởng Hồ Chí Minh vào xây dựng Nhà nước hiện nay, cần chú trọng điều gì?",
       answers: ["Cải cách hành chính và phòng chống tham nhũng", "Chỉ tập trung phát triển kinh tế", "Không cần sửa đổi luật pháp", "Hạn chế quyền làm chủ của dân"],
       correct: 0
+    },
+    {
+      question: "Đảng Cộng sản Việt Nam ra đời vào năm nào?",
+      answers: ["1925", "1927", "1930", "1945"],
+      correct: 2
+    },
+    {
+      question: "Ai là người sáng lập Đảng Cộng sản Việt Nam?",
+      answers: ["Trường Chinh", "Lê Duẩn", "Hồ Chí Minh", "Võ Nguyên Giáp"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng Cộng sản Việt Nam mang bản chất giai cấp nào?",
+      answers: ["Giai cấp nông dân", "Giai cấp công nhân", "Giai cấp trí thức", "Giai cấp tư sản"],
+      correct: 1
+    },
+    {
+      question: "Đảng Cộng sản Việt Nam đồng thời đại biểu cho lợi ích của ai?",
+      answers: ["Giai cấp công nhân", "Nhân dân lao động", "Dân tộc Việt Nam", "Cả A, B và C"],
+      correct: 3
+    },
+    {
+      question: "Mục tiêu cao nhất của Đảng Cộng sản Việt Nam là gì?",
+      answers: ["Giành chính quyền", "Phát triển kinh tế", "Phục vụ nhân dân", "Xây dựng CNXH và CNCS"],
+      correct: 3
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng lãnh đạo cách mạng bằng cách nào?",
+      answers: ["Mệnh lệnh hành chính", "Áp đặt quyền lực", "Đường lối, chủ trương đúng đắn", "Vũ lực"],
+      correct: 2
+    },
+    {
+      question: "Theo tư tưởng Hồ Chí Minh, Đảng có đứng trên nhân dân không?",
+      answers: ["Có", "Không", "Chỉ trong thời chiến", "Chỉ trong thời bình"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, cán bộ là gì của cách mạng?",
+      answers: ["Người chỉ huy", "Người quản lý", "Gốc của mọi công việc", "Người giám sát"],
+      correct: 2
+    },
+    {
+      question: "Đảng Cộng sản Việt Nam lấy chủ nghĩa nào làm nền tảng tư tưởng?",
+      answers: ["Chủ nghĩa dân tộc", "Chủ nghĩa yêu nước", "Chủ nghĩa Mác – Lênin", "Chủ nghĩa cải lương"],
+      correct: 2
+    },
+    {
+      question: "Nguyên tắc tổ chức cơ bản của Đảng là gì?",
+      answers: ["Đa nguyên đa đảng", "Phân quyền tuyệt đối", "Tập trung dân chủ", "Tự do tuyệt đối"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng phải thường xuyên làm gì để trong sạch, vững mạnh?",
+      answers: ["Tự phê bình và phê bình", "Mở rộng quyền lực", "Giữ bí mật nội bộ", "Tăng số lượng đảng viên"],
+      correct: 0
+    },
+    {
+      question: "Căn bệnh nào Hồ Chí Minh cảnh báo là nguy hiểm đối với Đảng?",
+      answers: ["Quan liêu", "Tham ô", "Xa rời quần chúng", "Cả A, B và C"],
+      correct: 3
+    },
+    {
+      question: "Theo Hồ Chí Minh, sức mạnh của Đảng bắt nguồn từ đâu?",
+      answers: ["Vũ khí", "Tiền bạc", "Nhân dân", "Quyền lực"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng phải gắn bó chặt chẽ với ai?",
+      answers: ["Trí thức", "Công nhân", "Nhân dân", "Quân đội"],
+      correct: 2
+    },
+    {
+      question: "Nhà nước Việt Nam theo Hồ Chí Minh là nhà nước của ai?",
+      answers: ["Giai cấp công nhân", "Đảng Cộng sản", "Nhân dân", "Chính phủ"],
+      correct: 2
+    },
+    {
+      question: "\"Nhà nước của dân\" có nghĩa là gì?",
+      answers: ["Dân đóng thuế", "Dân có quyền làm chủ", "Dân tự quản hoàn toàn", "Dân phục tùng nhà nước"],
+      correct: 1
+    },
+    {
+      question: "\"Nhà nước do dân\" thể hiện ở điểm nào?",
+      answers: ["Dân lao động", "Dân bầu ra nhà nước", "Dân tuân thủ pháp luật", "Dân đóng góp kinh tế"],
+      correct: 1
+    },
+    {
+      question: "\"Nhà nước vì dân\" có nghĩa là gì?",
+      answers: ["Phục vụ lợi ích của dân", "Phục vụ lợi ích của Đảng", "Phục vụ lợi ích của Nhà nước", "Phục vụ lợi ích của quốc tế"],
+      correct: 0
+    },
+    {
+      question: "Theo Hồ Chí Minh, nhân dân có quyền gì đối với Nhà nước?",
+      answers: ["Chỉ tuân theo", "Kiểm tra, giám sát", "Không được góp ý", "Chỉ đóng thuế"],
+      correct: 1
+    },
+    {
+      question: "Hồ Chí Minh coi cán bộ nhà nước là gì của nhân dân?",
+      answers: ["Người cai trị", "Người chỉ huy", "Công bộc", "Người kiểm soát"],
+      correct: 2
+    },
+    {
+      question: "Nhà nước quản lý xã hội chủ yếu bằng gì?",
+      answers: ["Quyền lực cá nhân", "Mệnh lệnh", "Pháp luật", "Ý chí lãnh đạo"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước ta là nhà nước kiểu gì?",
+      answers: ["Phong kiến", "Tư sản", "Xã hội chủ nghĩa", "Quân chủ"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, mọi quyền lực nhà nước thuộc về ai?",
+      answers: ["Chính phủ", "Quốc hội", "Nhân dân", "Đảng"],
+      correct: 2
+    },
+    {
+      question: "Theo tư tưởng Hồ Chí Minh, Nhà nước có được phép xa dân không?",
+      answers: ["Có", "Không", "Trong trường hợp đặc biệt", "Khi có chiến tranh"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, mục đích tồn tại của Nhà nước là gì?",
+      answers: ["Quản lý xã hội", "Thể hiện quyền lực", "Phục vụ nhân dân", "Phát triển bộ máy"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, ai là chủ của đất nước?",
+      answers: ["Đảng", "Chính phủ", "Nhân dân", "Quân đội"],
+      correct: 2
+    },
+    {
+      question: "Nhà nước vì dân phải thể hiện rõ nhất ở đâu?",
+      answers: ["Khẩu hiệu", "Văn bản", "Đời sống nhân dân", "Tổ chức bộ máy"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, cán bộ phải có phẩm chất gì?",
+      answers: ["Giàu có", "Quyền lực", "Đạo đức cách mạng", "Bằng cấp cao"],
+      correct: 2
+    },
+    {
+      question: "Theo Bác Hồ, cán bộ không được mắc bệnh gì?",
+      answers: ["Lười biếng", "Quan liêu", "Tham ô", "Cả A, B và C"],
+      correct: 3
+    },
+    {
+      question: "Theo Hồ Chí Minh, dân chủ có nghĩa là gì?",
+      answers: ["Dân làm chủ", "Dân phục tùng", "Dân không cần pháp luật", "Dân chỉ bầu cử"],
+      correct: 0
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng mạnh là nhờ đâu?",
+      answers: ["Quyền lực", "Số lượng đảng viên", "Gắn bó với nhân dân", "Bộ máy lớn"],
+      correct: 2
+    },
+    {
+      question: "Theo tư tưởng Hồ Chí Minh, Nhà nước có trách nhiệm gì?",
+      answers: ["Cai trị", "Phục vụ", "Kiểm soát", "Áp đặt"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, dân chủ phải gắn với yếu tố nào?",
+      answers: ["Tự do tuyệt đối", "Pháp luật", "Quyền lực", "Bạo lực"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, nhân dân tham gia quản lý nhà nước thông qua hình thức nào?",
+      answers: ["Bầu cử", "Biểu tình", "Tự quản", "Tự do cá nhân"],
+      correct: 0
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải tôn trọng điều gì của nhân dân?",
+      answers: ["Ý kiến", "Quyền làm chủ", "Quyền lợi", "Cả A, B và C"],
+      correct: 3
+    },
+    {
+      question: "Theo Hồ Chí Minh, pháp luật sinh ra để làm gì?",
+      answers: ["Trừng phạt", "Bảo vệ quyền lợi nhân dân", "Kiểm soát xã hội", "Thể hiện quyền lực"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải dựa vào đâu để hoạt động hiệu quả?",
+      answers: ["Quyền lực", "Tiền bạc", "Nhân dân", "Bộ máy"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, cán bộ tốt là người như thế nào?",
+      answers: ["Nhiều quyền", "Nhiều tiền", "Hết lòng vì dân", "Có chức vụ cao"],
+      correct: 2
+    },
+    {
+      question: "Theo tư tưởng Hồ Chí Minh, ai có quyền kiểm tra Nhà nước?",
+      answers: ["Đảng", "Chính phủ", "Nhân dân", "Quốc hội"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước không được làm điều gì?",
+      answers: ["Phục vụ dân", "Xa rời dân", "Tôn trọng dân", "Dựa vào dân"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, quyền lực nhà nước phải được sử dụng như thế nào?",
+      answers: ["Vì lợi ích cá nhân", "Vì lợi ích tập thể", "Vì lợi ích nhân dân", "Vì lợi ích tổ chức"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, dân chủ là mục tiêu hay phương tiện?",
+      answers: ["Chỉ là mục tiêu", "Chỉ là phương tiện", "Vừa là mục tiêu vừa là động lực", "Không quan trọng"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, ai là người quyết định vận mệnh đất nước?",
+      answers: ["Đảng", "Chính phủ", "Nhân dân", "Quân đội"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải lắng nghe ai?",
+      answers: ["Cán bộ", "Đảng viên", "Nhân dân", "Lãnh đạo"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải chịu trách nhiệm trước ai?",
+      answers: ["Đảng", "Chính phủ", "Nhân dân", "Quốc hội"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải bảo vệ quyền lợi của ai?",
+      answers: ["Cán bộ", "Tổ chức", "Nhân dân", "Doanh nghiệp"],
+      correct: 2
+    },
+    {
+      question: "Theo Hồ Chí Minh, dân chủ không bao gồm điều nào sau đây?",
+      answers: ["Quyền làm chủ", "Quyền tham gia", "Quyền giám sát", "Quyền cai trị"],
+      correct: 3
+    },
+    {
+      question: "Theo Hồ Chí Minh, Nhà nước phải dựa trên nguyên tắc nào?",
+      answers: ["Chuyên quyền", "Pháp quyền", "Cá nhân", "Tập trung tuyệt đối"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, mục đích của pháp luật là gì?",
+      answers: ["Trừng phạt dân", "Bảo vệ dân", "Kiểm soát dân", "Hạn chế dân"],
+      correct: 1
+    },
+    {
+      question: "Theo Hồ Chí Minh, Đảng và Nhà nước tồn tại vì ai?",
+      answers: ["Đảng viên", "Cán bộ", "Nhân dân", "Tổ chức"],
+      correct: 2
     }
   ]
 };
