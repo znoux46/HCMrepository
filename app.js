@@ -381,9 +381,9 @@ const showBossEncounter = (seasonIndex) => {
     const defaultBoss = {
       name: bossNamesByYear[year] || `Boss ${seasonName}`,
       icon: "👑",
-      baseConfidence: 60 * (1+(seasonIndex /4) * 0.5),
-      basePersuasion: 14 * (1+(seasonIndex /4) * 0.5),
-      baseResilience: 12 * (1+(seasonIndex /4) * 0.5),
+      baseConfidence: 60 + (60 * (seasonIndex /4) * 0.7),
+      basePersuasion: 14 + (60 * (seasonIndex /4) * 0.7),
+      baseResilience: 12 + (60 * (seasonIndex /4) * 0.7),
       exp: 100,
       topic: `Thử thách cuối năm ${year}`,
       correctAnswer: "Kiên trì học tập và rèn luyện",
