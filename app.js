@@ -1142,6 +1142,10 @@ window.openCrafting = () => {
   store.setState({ currentPage: 'crafting' });
 };
 
+window.openRules = () => {
+  store.setState({ currentPage: 'rules' });
+};
+
 window.craftItem = (itemId) => {
   const state = store.getState();
   const item = gameData.items[itemId];
@@ -1276,9 +1280,14 @@ const renderHomePage = () => {
         <div class="min-h-full p-6">
           <div class="max-w-6xl mx-auto">
             <div class="text-center mb-8 relative">
-              <button onclick="resetGame()" class="absolute top-0 right-0 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
-                🔄 Khởi động lại
-              </button>
+              <div class="absolute top-0 right-0 flex gap-2">
+                <button onclick="openRules()" class="px-4 py-2 bg-blue-600/50 hover:bg-blue-600 border border-blue-500/50 rounded-xl transition-all text-sm text-white">
+                  📖 Luật chơi
+                </button>
+                <button onclick="resetGame()" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+                  🔄 Khởi động lại
+                </button>
+              </div>
               <h1 class="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
                 Hành trình Tư tưởng Hồ Chí Minh
               </h1>
@@ -2290,6 +2299,198 @@ const renderDebateQuizModal = () => {
   `;
 };
 
+const renderRulesPage = () => {
+  return `
+    <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-8">
+          <button onclick="navigate('home')" class="mb-4 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+            ← Về trang chủ
+          </button>
+          <h1 class="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
+            📖 Luật chơi
+          </h1>
+          <p class="text-slate-300 text-lg">Hướng dẫn cách chơi chi tiết</p>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Mục tiêu -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>🎯</span>
+              <span>Mục tiêu trò chơi</span>
+            </h2>
+            <p class="text-slate-300 mb-2">
+              Bạn là một học viên đang học tập về Tư tưởng Hồ Chí Minh. Mục tiêu của bạn là:
+            </p>
+            <ul class="list-disc list-inside text-slate-300 space-y-2 ml-4">
+              <li>Du hành qua các tỉnh thành Việt Nam để học tập và tranh luận</li>
+              <li>Thu thập sách và vật phẩm để tăng cường khả năng</li>
+              <li>Chế tạo công cụ lập luận và vật phẩm hỗ trợ</li>
+              <li>Đánh bại các Boss trong các mùa để hoàn thành hành trình</li>
+              <li>Hoàn thành game bằng cách đánh bại Boss cuối cùng (Mùa Xuân 2030)</li>
+            </ul>
+          </div>
+
+          <!-- Hệ thống mùa -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>📅</span>
+              <span>Hệ thống mùa và thời gian</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-blue-400">Mùa:</strong> Game diễn ra từ Mùa Xuân 2026 đến Mùa Xuân 2030 (20 mùa)</p>
+              <p><strong class="text-blue-400">Tháng:</strong> Mỗi mùa có 3 tháng (Tháng đầu, Tháng giữa, Tháng cuối)</p>
+              <p><strong class="text-blue-400">Hoạt động:</strong> Mỗi hoạt động (học tập hoặc tranh luận) tiêu tốn 1 tháng</p>
+              <p><strong class="text-blue-400">Nghỉ ngơi:</strong> Bạn có thể bỏ qua mùa để nghỉ ngơi và phục hồi tự tin</p>
+            </div>
+          </div>
+
+          <!-- Học tập -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-green-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>🎓</span>
+              <span>Học tập</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-green-400">Cách học:</strong> Chọn một tỉnh thành và click "Học tập"</p>
+              <p><strong class="text-green-400">Thu thập học liệu:</strong></p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Mỗi lần học tập bạn sẽ nhận được 1-2 cuốn sách ngẫu nhiên từ các lĩnh vực kiến thức của tỉnh đó</li>
+                <li>Có 20% cơ hội nhận được vật phẩm hiếm (research_paper, documentary, interview_record)</li>
+                <li>Mỗi tỉnh có các loại sách riêng biệt, hãy khám phá để thu thập đầy đủ!</li>
+              </ul>
+              <p><strong class="text-green-400">Câu hỏi kiểm tra:</strong></p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Mỗi lần thu thập học liệu sẽ có một câu hỏi kiểm tra</li>
+                <li>Trả lời đúng: Nhận x2 số lượng vật phẩm!</li>
+                <li>Trả lời sai: Nhận số lượng bình thường</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Tranh luận -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-red-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>🗣️</span>
+              <span>Tranh luận</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-red-400">Cách tranh luận:</strong> Sau khi học tập, click "Tranh luận" để bắt đầu</p>
+              <p><strong class="text-red-400">Cơ chế:</strong></p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Bạn và đối thủ có thanh "Tự tin" (Confidence)</li>
+                <li>Mỗi lượt đưa ra lập luận sẽ gây sát thương cho đối thủ</li>
+                <li>Đối thủ sẽ phản biện và gây sát thương cho bạn</li>
+                <li>Người nào hết tự tin trước sẽ thua</li>
+              </ul>
+              <p><strong class="text-red-400">Câu hỏi khi đưa ra lập luận:</strong></p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Mỗi lần đưa ra lập luận sẽ có một câu hỏi kiểm tra</li>
+                <li>Trả lời đúng: Gây x1.5 sát thương!</li>
+                <li>Trả lời sai: Chỉ gây x0.8 sát thương</li>
+              </ul>
+              <p><strong class="text-red-400">Chiến thắng:</strong></p>
+              <ul class="list-disc list-inside space-y-1 ml-4">
+                <li>Nhận EXP để tăng cấp</li>
+                <li>Có cơ hội nhận sách và vật phẩm từ đối thủ</li>
+                <li>Sau khi thắng sẽ có câu hỏi kiểm tra</li>
+                <li>Trả lời đúng: Tỉ lệ rơi di tích x2!</li>
+              </ul>
+              <p><strong class="text-red-400">Rút lui:</strong> Bạn có thể rút lui khỏi tranh luận bất cứ lúc nào</p>
+            </div>
+          </div>
+
+          <!-- Chế tạo -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>📝</span>
+              <span>Chế tạo vật phẩm</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-purple-400">Công cụ lập luận:</strong> Tăng chỉ số Lập luận (Persuasion)</p>
+              <p><strong class="text-purple-400">Công cụ phòng thủ:</strong> Tăng chỉ số Phòng thủ (Resilience)</p>
+              <p><strong class="text-purple-400">Vật phẩm hỗ trợ:</strong> Sử dụng trong tranh luận để phục hồi tự tin hoặc buff</p>
+              <p><strong class="text-purple-400">Giới hạn:</strong> Mỗi vật phẩm chỉ có thể chế tạo 1 lần!</p>
+              <p><strong class="text-purple-400">Công thức:</strong> Mỗi công thức yêu cầu các loại sách cụ thể, hãy thu thập đầy đủ để chế tạo</p>
+            </div>
+          </div>
+
+          <!-- Trang bị -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>⚔️</span>
+              <span>Trang bị</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-yellow-400">Công cụ lập luận:</strong> Trang bị để tăng Lập luận</p>
+              <p><strong class="text-yellow-400">Công cụ phòng thủ:</strong> Trang bị để tăng Phòng thủ</p>
+              <p><strong class="text-yellow-400">Di tích:</strong> Trang bị đặc biệt tăng Trí tuệ, Uy tín, và Lòng yêu nước</p>
+              <p><strong class="text-yellow-400">Giới hạn:</strong> Chỉ có thể trang bị 1 vật phẩm mỗi loại</p>
+            </div>
+          </div>
+
+          <!-- Boss -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>👑</span>
+              <span>Boss</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-orange-400">Xuất hiện:</strong> Boss xuất hiện vào cuối một số mùa</p>
+              <p><strong class="text-orange-400">Độ khó:</strong> Boss mạnh hơn đối thủ thường rất nhiều</p>
+              <p><strong class="text-orange-400">Phần thưởng:</strong> Đánh bại Boss có tỉ lệ rơi vật phẩm đặc biệt</p>
+              <p><strong class="text-orange-400">Thất bại:</strong> Nếu thua hoặc rút lui khỏi Boss, game sẽ kết thúc!</p>
+              <p><strong class="text-orange-400">Boss cuối:</strong> Đánh bại Boss cuối cùng (Mùa Xuân 2030) để hoàn thành game!</p>
+            </div>
+          </div>
+
+          <!-- Chỉ số -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>📊</span>
+              <span>Chỉ số</span>
+            </h2>
+            <div class="space-y-3 text-slate-300">
+              <p><strong class="text-cyan-400">Trí tuệ (Wisdom):</strong> Tăng Lập luận và Phòng thủ</p>
+              <p><strong class="text-cyan-400">Uy tín (Credibility):</strong> Tăng Lập luận và Phòng thủ</p>
+              <p><strong class="text-cyan-400">Lòng yêu nước (Patriotism):</strong> Tăng Lập luận và Phòng thủ</p>
+              <p><strong class="text-cyan-400">Lập luận (Persuasion):</strong> Sát thương bạn gây ra cho đối thủ</p>
+              <p><strong class="text-cyan-400">Phòng thủ (Resilience):</strong> Giảm sát thương bạn nhận từ đối thủ</p>
+              <p><strong class="text-cyan-400">Tự tin (Confidence):</strong> HP trong tranh luận, hết tự tin sẽ thua</p>
+            </div>
+          </div>
+
+          <!-- Tips -->
+          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-emerald-500/30 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>💡</span>
+              <span>Mẹo chơi</span>
+            </h2>
+            <ul class="list-disc list-inside space-y-2 text-slate-300 ml-4">
+              <li>Học tập ở nhiều tỉnh khác nhau để thu thập đầy đủ các loại sách</li>
+              <li>Chế tạo công cụ lập luận và phòng thủ sớm để tăng sức mạnh</li>
+              <li>Trang bị Di tích để nhận bonus chỉ số lớn</li>
+              <li>Chuẩn bị vật phẩm hỗ trợ trước khi đối đầu với Boss</li>
+              <li>Trả lời đúng câu hỏi khi đưa ra lập luận để gây nhiều sát thương hơn</li>
+              <li>Sử dụng tính năng "Tự động" để tự động đưa ra lập luận</li>
+              <li>Nghỉ ngơi khi tự tin thấp để phục hồi</li>
+              <li>Mỗi tỉnh có độ khó khác nhau, hãy bắt đầu từ những tỉnh dễ</li>
+            </ul>
+          </div>
+
+          <!-- Nút quay lại -->
+          <div class="text-center">
+            <button onclick="navigate('home')" class="px-6 py-3 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all shadow-lg">
+              ← Về trang chủ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
 const renderGameOverPage = () => {
   const state = store.getState();
   const { scholar, inventory, provinceProgress, season, gameOverReason } = state;
@@ -2479,6 +2680,9 @@ const render = () => {
       break;
     case 'crafting':
       content = renderCraftingPage();
+      break;
+    case 'rules':
+      content = renderRulesPage();
       break;
     case 'gameover':
       content = renderGameOverPage();
