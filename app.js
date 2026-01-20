@@ -1270,7 +1270,18 @@ const renderHomePage = () => {
 
             <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🗺️</span>
-              <span>Hành trình khám phá</span>
+              <span>Bản đồ Việt Nam</span>
+            </h3>
+            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 mb-6 shadow-xl">
+              <p class="text-sm text-slate-400 mb-4 text-center">Di chuột để xem thông tin tỉnh • Click để chọn tỉnh</p>
+              <div id="map-container" class="flex justify-center overflow-x-auto">
+                <!-- Canvas sẽ được thêm vào đây -->
+              </div>
+            </div>
+            
+            <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
+              <span>📋</span>
+              <span>Danh sách tỉnh thành</span>
             </h3>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               ${gameData.provinces.map((prov, i) => {
@@ -2340,6 +2351,33 @@ const render = () => {
         ${renderDebateQuizModal()}
         ${renderToast()}
       `;
+  
+  // Khởi tạo Canvas bản đồ sau khi render trang home
+  if (state.currentPage === 'home' && typeof window.createMapCanvas === 'function') {
+    setTimeout(() => {
+      const mapContainer = document.getElementById('map-container');
+      if (mapContainer) {
+        // Xóa canvas cũ nếu có
+        const oldCanvas = document.getElementById('vietnam-map-canvas');
+        if (oldCanvas) {
+          oldCanvas.remove();
+        }
+        // Tạo canvas mới
+        const canvas = window.createMapCanvas();
+        mapContainer.appendChild(canvas);
+      }
+    }, 100);
+  }
+};
+
+// Hàm xử lý khi chọn tỉnh từ bản đồ canvas
+window.selectProvinceFromMap = (provinceId) => {
+  const province = gameData.provinces.find(p => p.id === provinceId);
+  if (province) {
+    store.setState({ currentProvince: provinceId });
+    store.setState({ currentPage: 'studying' });
+    showToast(`📍 Đã chọn ${province.name}`, 'success');
+  }
 };
 
 // ==================== ELEMENT SDK INITIALIZATION ====================
@@ -2372,6 +2410,8 @@ const onConfigChange = async (config) => {
 };
 
 // ==================== INITIALIZATION ====================
+// Expose store to window for mapCanvas.js to access
+window.store = store;
 store.subscribe(render);
 
 if (window.elementSdk) {
