@@ -983,34 +983,26 @@ window.answerDebateQuiz = (choiceIndex) => {
     
     // Double drop rate for landmarks
     setTimeout(() => {
-      if (opponentData && opponentData.dropItems && opponentData.dropRate) {
-        // Boss drop logic with doubled rate
-        const doubledRate = Math.min(1, opponentData.dropRate * 2);
-        if (Math.random() < doubledRate) {
-          const droppedItem = opponentData.dropItems[Math.floor(Math.random() * opponentData.dropItems.length)];
-          if (droppedItem && gameData.items[droppedItem]) {
-            addToInventory(droppedItem, 1);
-            showToast(`🏆 Đánh bại Boss! Nhận được ${gameData.items[droppedItem].icon} ${gameData.items[droppedItem].name}`, 'success');
-          }
+      // Check for landmark drops from current province
+      const province = gameData.provinces.find(p => p.id === state.currentProvince);
+      if (province && province.uniqueItems && province.uniqueItems.length > 0) {
+        // Filter to only landmark items from this province
+        const landmarkItems = province.uniqueItems.filter(id => {
+          const item = gameData.items[id];
+          return item && item.type === 'landmark';
+        });
+
+        const dropRate = currentOpponent.isBoss ? 0.5 : 0.1; // Higher rate for boss
+        if (landmarkItems.length > 0 && Math.random() < dropRate) {
+          const randomLandmark = landmarkItems[Math.floor(Math.random() * landmarkItems.length)];
+          addToInventory(randomLandmark, 1);
+          const toastMessage = currentOpponent.isBoss ? `🏆 Đánh bại Boss! Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}` : `🏛️ Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}`;
+          showToast(toastMessage, 'success');
         }
-      } else {
-        // Normal opponent - check for landmark drops from current province with doubled rate
-        const province = gameData.provinces.find(p => p.id === state.currentProvince);
-        if (province && province.uniqueItems && province.uniqueItems.length > 0) {
-          // Filter to only landmark items from this province
-          const landmarkItems = province.uniqueItems.filter(id => {
-            const item = gameData.items[id];
-            return item && item.type === 'landmark';
-          });
-          
-          if (landmarkItems.length > 0 && Math.random() < 0.6) { // Increased from 0.4
-            const randomLandmark = landmarkItems[Math.floor(Math.random() * landmarkItems.length)];
-            addToInventory(randomLandmark, 1);
-            showToast(`🏛️ Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}`, 'success');
-          }
-        }
-        
-        // Normal knowledge drops
+      }
+
+      // Normal knowledge drops (only for non-boss)
+      if (!currentOpponent.isBoss) {
         currentOpponent.knowledge?.forEach(itemId => {
           if (Math.random() < 0.6) {
             addToInventory(itemId, 1);
