@@ -381,9 +381,9 @@ const showBossEncounter = (seasonIndex) => {
     const defaultBoss = {
       name: bossNamesByYear[year] || `Boss ${seasonName}`,
       icon: "👑",
-      baseConfidence: 80 * (1+(seasonIndex /4) * 0.5),
-      basePersuasion: 20 * (1+(seasonIndex /4) * 0.5),
-      baseResilience: 16 * (1+(seasonIndex /4) * 0.5),
+      baseConfidence: 60 * (1+(seasonIndex /4) * 0.5),
+      basePersuasion: 14 * (1+(seasonIndex /4) * 0.5),
+      baseResilience: 12 * (1+(seasonIndex /4) * 0.5),
       exp: 100,
       topic: `Thử thách cuối năm ${year}`,
       correctAnswer: "Kiên trì học tập và rèn luyện",
@@ -994,16 +994,20 @@ window.answerDebateQuiz = (choiceIndex) => {
           }
         }
       } else {
-        // Normal opponent - check for landmark drops with doubled rate
-        const landmarkItems = Object.keys(gameData.items).filter(id => {
-          const item = gameData.items[id];
-          return item && item.type === 'landmark';
-        });
-        
-        if (landmarkItems.length > 0 && Math.random() < 0.4) { // Doubled from 0.2
-          const randomLandmark = landmarkItems[Math.floor(Math.random() * landmarkItems.length)];
-          addToInventory(randomLandmark, 1);
-          showToast(`🏛️ Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}`, 'success');
+        // Normal opponent - check for landmark drops from current province with doubled rate
+        const province = gameData.provinces.find(p => p.id === state.currentProvince);
+        if (province && province.uniqueItems && province.uniqueItems.length > 0) {
+          // Filter to only landmark items from this province
+          const landmarkItems = province.uniqueItems.filter(id => {
+            const item = gameData.items[id];
+            return item && item.type === 'landmark';
+          });
+          
+          if (landmarkItems.length > 0 && Math.random() < 0.6) { // Increased from 0.4
+            const randomLandmark = landmarkItems[Math.floor(Math.random() * landmarkItems.length)];
+            addToInventory(randomLandmark, 1);
+            showToast(`🏛️ Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}`, 'success');
+          }
         }
         
         // Normal knowledge drops
@@ -1670,7 +1674,7 @@ const renderDebatePage = () => {
         <div class="min-h-full p-6">
           <div class="max-w-4xl w-full mx-auto">
             <div class="flex items-center justify-between mb-4">
-              <button onclick="exitProvince(true)" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+              <button onclick="exitProvince(false)" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
                 ← Quay lại học tập
               </button>
               <button onclick="openRulesSection('debate')" class="px-4 py-2 bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 rounded-xl transition-all text-sm text-white">
