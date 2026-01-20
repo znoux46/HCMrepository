@@ -382,8 +382,8 @@ const showBossEncounter = (seasonIndex) => {
       name: bossNamesByYear[year] || `Boss ${seasonName}`,
       icon: "👑",
       baseConfidence: 60 + (60 * (seasonIndex /4) * 0.7),
-      basePersuasion: 14 + (60 * (seasonIndex /4) * 0.7),
-      baseResilience: 12 + (60 * (seasonIndex /4) * 0.7),
+      basePersuasion: 14 + (14 * (seasonIndex /4) * 0.7),
+      baseResilience: 12 + (12 * (seasonIndex /4) * 0.7),
       exp: 100,
       topic: `Thử thách cuối năm ${year}`,
       correctAnswer: "Kiên trì học tập và rèn luyện",
@@ -431,10 +431,10 @@ const showBossEncounter = (seasonIndex) => {
     name: bossTitle,
     icon: bossData.icon,
     topic: bossData.topic,
-    maxConfidence: bossData.baseConfidence,
-    currentConfidence: bossData.baseConfidence,
-    persuasion: bossData.basePersuasion,
-    resilience: bossData.baseResilience,
+    maxConfidence: 60 + (60 * (seasonIndex / 4) * 0.7),
+    currentConfidence: 60 + (60 * (seasonIndex / 4) * 0.7),
+    persuasion: 14 + (14 * (seasonIndex / 4) * 0.7),
+    resilience: 12 + (12 * (seasonIndex / 4) * 0.7),
     exp: bossData.exp,
     knowledge: bossData.knowledge || [],
     correctAnswer: bossData.correctAnswer,
@@ -1289,8 +1289,11 @@ const renderHomePage = () => {
                   🔄 Khởi động lại
                 </button>
               </div>
-              <h1 class="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
-                Hành trình Tư tưởng Hồ Chí Minh
+              <h1 class="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-sans tracking-tight">
+                Hành trình Tư tưởng
+              </h1>
+              <h1 class="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-sans tracking-tight">
+                Hồ Chí Minh
               </h1>
               <p class="text-slate-300 text-lg">Học tập - Tranh luận - Trưởng thành</p>
               <div class="mt-4 inline-block px-6 py-2 bg-amber-500/20 border border-amber-500/50 rounded-xl">
@@ -1664,97 +1667,129 @@ const renderDebatePage = () => {
 
   return `
         <div class="min-h-full p-6">
-          <div class="max-w-4xl w-full mx-auto">
-            <div class="flex items-center justify-between mb-4">
-              <button onclick="exitProvince(false)" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
-                ← Quay lại học tập
-              </button>
-              <button onclick="openRulesSection('debate')" class="px-4 py-2 bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 rounded-xl transition-all text-sm text-white">
-                📖 Luật (Cơ chế &amp; Vật phẩm)
-              </button>
-            </div>
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
-              <div class="text-center mb-6">
-                <h3 class="text-xl font-bold text-amber-400 mb-2">Đề tài tranh luận</h3>
-                <p class="text-lg font-serif italic text-slate-200">"${currentOpponent.topic}"</p>
-              </div>
-
-              <div class="grid md:grid-cols-2 gap-8 mb-8">
-                <div class="text-center">
-                  <div class="text-6xl mb-4 ${debate.scholarTurn ? 'animate-float' : ''}">🎓</div>
-                  <h3 class="font-bold text-xl mb-2">${scholar.name}</h3>
-                  <div class="mb-3">
-                    <div class="flex justify-between text-sm mb-1">
-                      <span>Tự tin</span>
-                      <span>${scholar.currentConfidence}/${scholar.maxConfidence}</span>
-                    </div>
-                    <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
-                      <div class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-green-600 rounded-full" style="width: ${(scholar.currentConfidence / scholar.maxConfidence) * 100}%"></div>
-                    </div>
-                  </div>
-                  <div class="flex justify-center gap-4 text-sm">
-                    <span class="text-rose-400">💡 ${stats.persuasion}</span>
-                    <span class="text-blue-400">🛡️ ${stats.resilience}</span>
-                  </div>
-                </div>
-
-                <div class="text-center">
-                  <div class="text-6xl mb-4">${currentOpponent.icon}</div>
-                  <h3 class="font-bold text-xl mb-2">${currentOpponent.name}</h3>
-                  <div class="mb-3">
-                    <div class="flex justify-between text-sm mb-1">
-                      <span>Tự tin</span>
-                      <span>${currentOpponent.currentConfidence}/${currentOpponent.maxConfidence}</span>
-                    </div>
-                    <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
-                      <div class="progress-bar h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" style="width: ${(currentOpponent.currentConfidence / currentOpponent.maxConfidence) * 100}%"></div>
-                    </div>
-                  </div>
-                  <div class="flex justify-center gap-4 text-sm">
-                    <span class="text-rose-400">💡 ${currentOpponent.persuasion}</span>
-                    <span class="text-blue-400">🛡️ ${currentOpponent.resilience}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-slate-700/40 rounded-xl p-4 mb-6 max-h-[150px] overflow-y-auto border border-slate-600/50">
-                ${debate.log.map(msg => `<p class="text-sm mb-1 text-slate-200">${msg}</p>`).join('')}
-              </div>
-
-              ${debate.scholarTurn && currentOpponent.currentConfidence > 0 && scholar.currentConfidence > 0 ? `
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                  <button onclick="presentArgument()" class="py-4 px-6 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all animate-glow shadow-lg">
-                    💡 Đưa ra lập luận
-                  </button>
-                  <button onclick="toggleAutoArgument()" class="py-4 px-6 ${state.autoArgument ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-600'} rounded-xl font-bold text-lg transition-all">
-                    🔁 Tự động (${state.autoArgument ? 'ON' : 'OFF'})
-                  </button>
-                </div>
-              ` : ''}
-              
-              <div class="flex justify-center">
-                <button onclick="conced()" class="py-3 px-6 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-300 hover:text-white">
-                  🚪 Rút lui khỏi tranh luận
+          <div class="max-w-7xl w-full mx-auto grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <button onclick="conced()" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+                  ← Rút lui khỏi tranh luận
                 </button>
               </div>
+              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
+                <div class="text-center mb-6">
+                  <h3 class="text-xl font-bold text-amber-400 mb-2">Đề tài tranh luận</h3>
+                  <p class="text-lg font-serif italic text-slate-200">"${currentOpponent.topic}"</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                  <div class="text-center">
+                    <div class="text-6xl mb-4 ${debate.scholarTurn ? 'animate-float' : ''}">🎓</div>
+                    <h3 class="font-bold text-xl mb-2">${scholar.name}</h3>
+                    <div class="mb-3">
+                      <div class="flex justify-between text-sm mb-1">
+                        <span>Tự tin</span>
+                        <span>${scholar.currentConfidence}/${scholar.maxConfidence}</span>
+                      </div>
+                      <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
+                        <div class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-green-600 rounded-full" style="width: ${(scholar.currentConfidence / scholar.maxConfidence) * 100}%"></div>
+                      </div>
+                    </div>
+                    <div class="flex justify-center gap-4 text-sm">
+                      <span class="text-rose-400">💡 ${stats.persuasion}</span>
+                      <span class="text-blue-400">🛡️ ${stats.resilience}</span>
+                    </div>
+                  </div>
+
+                  <div class="text-center">
+                    <div class="text-6xl mb-4">${currentOpponent.icon}</div>
+                    <h3 class="font-bold text-xl mb-2">${currentOpponent.name}</h3>
+                    <div class="mb-3">
+                      <div class="flex justify-between text-sm mb-1">
+                        <span>Tự tin</span>
+                        <span>${currentOpponent.currentConfidence}/${currentOpponent.maxConfidence}</span>
+                      </div>
+                      <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
+                        <div class="progress-bar h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" style="width: ${(currentOpponent.currentConfidence / currentOpponent.maxConfidence) * 100}%"></div>
+                      </div>
+                    </div>
+                    <div class="flex justify-center gap-4 text-sm">
+                      <span class="text-rose-400">💡 ${currentOpponent.persuasion}</span>
+                      <span class="text-blue-400">🛡️ ${currentOpponent.resilience}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-slate-700/40 rounded-xl p-4 mb-6 max-h-[150px] overflow-y-auto border border-slate-600/50">
+                  ${debate.log.map(msg => `<p class="text-sm mb-1 text-slate-200">${msg}</p>`).join('')}
+                </div>
+
+                ${debate.scholarTurn && currentOpponent.currentConfidence > 0 && scholar.currentConfidence > 0 ? `
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <button onclick="presentArgument()" class="py-4 px-6 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all animate-glow shadow-lg">
+                      💡 Đưa ra lập luận
+                    </button>
+                    <button onclick="toggleAutoArgument()" class="py-4 px-6 ${state.autoArgument ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-600'} rounded-xl font-bold text-lg transition-all">
+                      🔁 Tự động (${state.autoArgument ? 'ON' : 'OFF'})
+                    </button>
+                  </div>
+                ` : ''}
+
+                <div class="flex justify-center">
+                  <button onclick="conced()" class="py-3 px-6 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-300 hover:text-white">
+                    🚪 Rút lui khỏi tranh luận
+                  </button>
+                </div>
+              </div>
+
+              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 shadow-lg">
+                <h4 class="font-bold mb-3">☕ Vật phẩm hỗ trợ</h4>
+                <div class="flex gap-2 flex-wrap">
+                  ${Object.entries(state.inventory).filter(([id]) => {
+                    const item = gameData.items[id];
+                    return item && item.type === 'consumable';
+                  }).slice(0, 5).map(([id, count]) => {
+                    const item = gameData.items[id];
+                    if (!item) return '';
+                    return `
+                      <button onclick="useItem('${id}')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 rounded-lg transition-all">
+                        <span class="text-2xl">${item.icon}</span>
+                        <span class="ml-2 text-sm">${count}</span>
+                      </button>
+                    `;
+                  }).filter(Boolean).join('')}
+                </div>
+              </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 shadow-lg">
-              <h4 class="font-bold mb-3">☕ Vật phẩm hỗ trợ</h4>
-              <div class="flex gap-2 flex-wrap">
-                ${Object.entries(state.inventory).filter(([id]) => {
-                  const item = gameData.items[id];
-                  return item && item.type === 'consumable';
-                }).slice(0, 5).map(([id, count]) => {
-                  const item = gameData.items[id];
-                  if (!item) return '';
-                  return `
-                    <button onclick="useItem('${id}')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 rounded-lg transition-all">
-                      <span class="text-2xl">${item.icon}</span>
-                      <span class="ml-2 text-sm">${count}</span>
-                    </button>
-                  `;
-                }).filter(Boolean).join('')}
+            <div class="lg:col-span-1">
+              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-red-500/30 shadow-lg sticky top-6">
+                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span>🗣️</span>
+                  <span>Luật Tranh luận</span>
+                </h2>
+                <div class="space-y-3 text-slate-300 text-sm">
+                  <p><strong class="text-red-400">Cách tranh luận:</strong> Sau khi học tập, click "Tranh luận" để bắt đầu</p>
+                  <p><strong class="text-red-400">Cơ chế:</strong></p>
+                  <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Bạn và đối thủ có thanh "Tự tin" (Confidence)</li>
+                    <li>Mỗi lượt đưa ra lập luận sẽ gây sát thương cho đối thủ</li>
+                    <li>Đối thủ sẽ phản biện và gây sát thương cho bạn</li>
+                    <li>Người nào hết tự tin trước sẽ thua</li>
+                  </ul>
+                  <p><strong class="text-red-400">Câu hỏi khi đưa ra lập luận:</strong></p>
+                  <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Mỗi lần đưa ra lập luận sẽ có một câu hỏi kiểm tra</li>
+                    <li>Trả lời đúng: Gây x1.5 sát thương!</li>
+                    <li>Trả lời sai: Chỉ gây x0.8 sát thương</li>
+                  </ul>
+                  <p><strong class="text-red-400">Chiến thắng:</strong></p>
+                  <ul class="list-disc list-inside space-y-1 ml-4">
+                    <li>Nhận EXP để tăng cấp</li>
+                    <li>Có cơ hội nhận sách và vật phẩm từ đối thủ</li>
+                    <li>Sau khi thắng sẽ có câu hỏi kiểm tra</li>
+                    <li>Trả lời đúng: Tỉ lệ rơi di tích x2!</li>
+                  </ul>
+                  <p><strong class="text-red-400">Rút lui:</strong> Bạn có thể rút lui khỏi tranh luận bất cứ lúc nào</p>
+                </div>
               </div>
             </div>
           </div>
@@ -2238,8 +2273,11 @@ const renderIntroPage = () => {
         <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
           <div class="max-w-4xl mx-auto">
             <div class="text-center mb-10">
-              <h1 class="text-4xl md:text-6xl font-black mb-4 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
-                Hành trình Tư tưởng Hồ Chí Minh
+              <h1 class="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-sans tracking-tight">
+                Hành trình Tư tưởng
+              </h1>
+              <h1 class="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-sans tracking-tight">
+                Hồ Chí Minh
               </h1>
               <div class="space-y-6 text-justify"> 
   
@@ -2867,6 +2905,24 @@ const onConfigChange = async (config) => {
 };
 
 // ==================== INITIALIZATION ====================
+// Handle page refresh/close during debate
+window.addEventListener('beforeunload', (e) => {
+  const state = store.getState();
+  if (state.currentPage === 'debate' && state.debate) {
+    // Call concede function when leaving debate page
+    concede();
+  }
+});
+
+// Handle F5 key press during debate
+window.addEventListener('keydown', (e) => {
+  const state = store.getState();
+  if (state.currentPage === 'debate' && state.debate && e.keyCode === 116) { // F5 key
+    e.preventDefault(); // Prevent browser refresh
+    confirmConcede(); // Directly concede without modal confirmation
+  }
+});
+
 // Expose store to window for mapCanvas.js to access
 window.store = store;
 store.subscribe(render);
