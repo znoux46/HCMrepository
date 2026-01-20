@@ -67,11 +67,12 @@ const getSeasonName = (seasonIndex) => {
 };
 
 const store = createStore({
-  currentPage: 'home',
+  currentPage: 'intro',
   currentProvince: null,
   autoArgument: false,
   season: saved?.season || 0, // 0 = Spring 2026, 19 = Spring 2030
   currentMonth: saved?.currentMonth || 0, // 0 = first month, 1 = second month, 2 = final month
+  rulesSection: 'general',
   scholar: saved?.scholar || {
     name: "Học viên",
     level: 1,
@@ -1143,7 +1144,11 @@ window.openCrafting = () => {
 };
 
 window.openRules = () => {
-  store.setState({ currentPage: 'rules' });
+  store.setState({ currentPage: 'rules', rulesSection: 'general' });
+};
+
+window.openRulesSection = (section) => {
+  store.setState({ currentPage: 'rules', rulesSection: section || 'general' });
 };
 
 window.craftItem = (itemId) => {
@@ -1505,9 +1510,17 @@ const renderStudyingPage = () => {
                   <div class="text-2xl font-bold text-amber-400 mb-1">${seasonName}</div>
                   <div class="text-lg text-slate-300">${currentMonthName}</div>
                 </div>
-                <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all">
-                  ← Quay lại
-                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="openRulesSection('collecting')" class="px-3 py-2 bg-amber-600/30 hover:bg-amber-600 border border-amber-500/40 rounded-xl transition-all text-sm text-white">
+                    📖 Luật (Thu thập)
+                  </button>
+                  <button onclick="openRulesSection('debate')" class="px-3 py-2 bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 rounded-xl transition-all text-sm text-white">
+                    📖 Luật (Tranh luận)
+                  </button>
+                  <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all">
+                    ← Quay lại
+                  </button>
+                </div>
               </div>
               
               <div class="text-center mb-4">
@@ -1654,8 +1667,16 @@ const renderDebatePage = () => {
   const stats = getScholarStats();
 
   return `
-        <div class="min-h-full p-6 flex items-center justify-center">
-          <div class="max-w-4xl w-full">
+        <div class="min-h-full p-6">
+          <div class="max-w-4xl w-full mx-auto">
+            <div class="flex items-center justify-between mb-4">
+              <button onclick="exitProvince(true)" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+                ← Quay lại học tập
+              </button>
+              <button onclick="openRulesSection('debate')" class="px-4 py-2 bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 rounded-xl transition-all text-sm text-white">
+                📖 Luật (Cơ chế &amp; Vật phẩm)
+              </button>
+            </div>
             <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
               <div class="text-center mb-6">
                 <h3 class="text-xl font-bold text-amber-400 mb-2">Đề tài tranh luận</h3>
@@ -2213,6 +2234,75 @@ const renderLearningQuizModal = () => {
   `;
 };
 
+const renderIntroPage = () => {
+  const hasSave = !!saved;
+  const seasonLabel = getSeasonName((saved && typeof saved.season === 'number') ? saved.season : 0);
+
+  return `
+        <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
+          <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-10">
+              <h1 class="text-4xl md:text-6xl font-black mb-4 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
+                Hành trình Tư tưởng Hồ Chí Minh
+              </h1>
+              <div class="space-y-6 text-justify"> 
+  
+  <p class="text-slate-300 text-lg md:text-xl">
+    Bạn không bắt đầu trong một cung điện. Bạn bắt đầu trong một thư viện cũ kỹ, nơi mùi giấy mục và mực in hòa quyện thành thứ hương vị của thời gian. Bạn là một Học viên của Thời đại — một linh hồn trẻ tuổi mang trong mình tham vọng xoay chuyển bánh xe tư tưởng của quốc gia.
+  </p>
+
+  <p class="text-slate-300 text-lg md:text-xl">
+    Mục tiêu của bạn là thu thập những "vũ khí" đầu tiên: Dữ liệu và Sự thật. Bạn bắt đầu bước ra khỏi thư viện để đến với các diễn đàn học thuật, nơi những bộ óc sắc bén nhất tranh đấu. Khi mùa đông của sự khổ luyện kết thúc, cánh cửa của Quốc hội mở ra. Trước mặt bạn là hàng trăm đại biểu — những người nắm giữ huyết mạch của quốc gia.
+  </p>
+
+  <p class="text-slate-300 text-lg md:text-xl italic mt-10 pl-4 border-l-2 border-slate-500">
+    "Thưa các vị, luật lệ được viết trên giấy, nhưng tương lai được viết bằng tư tưởng. Nếu chúng ta chỉ nhìn vào mặt đất dưới chân, chúng ta sẽ mãi mãi đi vòng quanh một cái hố."
+  </p>
+  
+</div>
+              
+              <div class="mt-6 inline-block px-6 py-2 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+                <p class="text-lg font-bold text-amber-400">${seasonLabel}</p>
+                <p class="text-xs text-slate-400">${hasSave ? 'Có dữ liệu lưu — có thể tiếp tục' : 'Bắt đầu hành trình mới'}</p>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4 mb-8">
+              <button onclick="openRulesSection('general')" class="p-5 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-xl transition-all card-hover text-left">
+                <div class="text-3xl mb-2">📘</div>
+                <div class="font-bold text-lg">Luật chung</div>
+                <div class="text-sm text-slate-300 mt-1">Mục tiêu, thời gian, chỉ số, mẹo chơi</div>
+              </button>
+              <button onclick="openRulesSection('studying')" class="p-5 bg-gradient-to-r from-emerald-600/20 to-green-600/20 hover:from-emerald-600/30 hover:to-green-600/30 border border-emerald-500/40 rounded-xl transition-all card-hover text-left">
+                <div class="text-3xl mb-2">🎓</div>
+                <div class="font-bold text-lg">Học tập</div>
+                <div class="text-sm text-slate-300 mt-1">Chọn tỉnh, học, câu hỏi kiểm tra</div>
+              </button>
+              <button onclick="openRulesSection('collecting')" class="p-5 bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/40 rounded-xl transition-all card-hover text-left">
+                <div class="text-3xl mb-2">📚</div>
+                <div class="font-bold text-lg">Thu thập học liệu &amp; Soạn luận cứ</div>
+                <div class="text-sm text-slate-300 mt-1">Sách theo vùng, công thức chế tạo</div>
+              </button>
+              <button onclick="openRulesSection('debate')" class="p-5 bg-gradient-to-r from-rose-600/20 to-red-600/20 hover:from-rose-600/30 hover:to-red-600/30 border border-rose-500/40 rounded-xl transition-all card-hover text-left">
+                <div class="text-3xl mb-2">🗣️</div>
+                <div class="font-bold text-lg">Tranh luận</div>
+                <div class="text-sm text-slate-300 mt-1">Đưa ra lập luận, vật phẩm hỗ trợ</div>
+              </button>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-3 justify-center">
+              <button onclick="navigate('home')" class="px-7 py-3 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all shadow-lg">
+                ${hasSave ? '▶ Tiếp tục hành trình' : '▶ Bắt đầu'}
+              </button>
+              <button onclick="openRulesSection('general')" class="px-7 py-3 bg-slate-700/40 hover:bg-slate-700 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-200">
+                📖 Xem luật chơi
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+};
+
 const renderArgumentQuizModal = () => {
   const state = store.getState();
   if (!state.argumentQuiz) return '';
@@ -2300,13 +2390,31 @@ const renderDebateQuizModal = () => {
 };
 
 const renderRulesPage = () => {
+  const state = store.getState();
+  const section = state.rulesSection || 'general';
+
+  const tabClass = (key) =>
+    `px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+      section === key
+        ? 'bg-amber-500/30 border-amber-500/50 text-amber-200'
+        : 'bg-slate-800/50 border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-800'
+    }`;
+
   return `
     <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-8">
-          <button onclick="navigate('home')" class="mb-4 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
-            ← Về trang chủ
-          </button>
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <button onclick="navigate('intro')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+              ← Về màn hình mở
+            </button>
+            <div class="flex flex-wrap justify-center gap-2">
+              <button onclick="openRulesSection('general')" class="${tabClass('general')}">Luật chung</button>
+              <button onclick="openRulesSection('studying')" class="${tabClass('studying')}">Học tập</button>
+              <button onclick="openRulesSection('collecting')" class="${tabClass('collecting')}">Thu thập &amp; Soạn luận cứ</button>
+              <button onclick="openRulesSection('debate')" class="${tabClass('debate')}">Tranh luận</button>
+            </div>
+          </div>
           <h1 class="text-4xl md:text-5xl font-black mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-serif">
             📖 Luật chơi
           </h1>
@@ -2315,7 +2423,7 @@ const renderRulesPage = () => {
 
         <div class="space-y-6">
           <!-- Mục tiêu -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🎯</span>
               <span>Mục tiêu trò chơi</span>
@@ -2333,7 +2441,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Hệ thống mùa -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📅</span>
               <span>Hệ thống mùa và thời gian</span>
@@ -2347,7 +2455,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Học tập -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-green-500/30 shadow-lg">
+          <div class="${section === 'studying' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-green-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🎓</span>
               <span>Học tập</span>
@@ -2370,7 +2478,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Tranh luận -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-red-500/30 shadow-lg">
+          <div class="${section === 'debate' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-red-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🗣️</span>
               <span>Tranh luận</span>
@@ -2402,7 +2510,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Chế tạo -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 shadow-lg">
+          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📝</span>
               <span>Chế tạo vật phẩm</span>
@@ -2417,7 +2525,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Trang bị -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/30 shadow-lg">
+          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>⚔️</span>
               <span>Trang bị</span>
@@ -2431,7 +2539,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Boss -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>👑</span>
               <span>Boss</span>
@@ -2446,7 +2554,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Chỉ số -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📊</span>
               <span>Chỉ số</span>
@@ -2462,7 +2570,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Tips -->
-          <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-emerald-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-emerald-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>💡</span>
               <span>Mẹo chơi</span>
@@ -2482,7 +2590,7 @@ const renderRulesPage = () => {
           <!-- Nút quay lại -->
           <div class="text-center">
             <button onclick="navigate('home')" class="px-6 py-3 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all shadow-lg">
-              ← Về trang chủ
+              ← Vào game
             </button>
           </div>
         </div>
@@ -2666,6 +2774,9 @@ const render = () => {
   let content = '';
 
   switch (state.currentPage) {
+    case 'intro':
+      content = renderIntroPage();
+      break;
     case 'home':
       content = renderHomePage();
       break;
