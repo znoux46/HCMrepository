@@ -96,6 +96,7 @@ const store = createStore({
   quiz: null,
   learningQuiz: null, // Quiz khi học tập
   debateQuiz: null, // Quiz khi thắng tranh luận
+  argumentQuiz: null, // Quiz khi đưa ra lập luận
   toast: null
 });
 
@@ -365,16 +366,25 @@ const showBossEncounter = (seasonIndex) => {
   const bossKey = bossKeys[Math.floor(seasonIndex / 4) % bossKeys.length];
   const bossData = gameData.opponents[bossKey];
   
+  // Đặt tên boss theo năm
+  const year = 2026 + Math.floor(seasonIndex / 4);
+  const bossNamesByYear = {
+    2027: 'Đại biểu Kỳ họp thứ 4, Quốc hội khóa XVI',
+    2028: 'Đại biểu Kỳ họp thứ 6, Quốc hội khóa XVI',
+    2029: 'Đại biểu Kỳ họp thứ 8, Quốc hội khóa XVI',
+    2030: 'Đại biểu Kỳ họp thứ 10, Quốc hội khóa XVI'
+  };
+  
   if (!bossData) {
     // Fallback to default boss
     const defaultBoss = {
-      name: `Boss ${seasonName}`,
+      name: bossNamesByYear[year] || `Boss ${seasonName}`,
       icon: "👑",
       baseConfidence: 80 * (1+(seasonIndex /4) * 0.5),
       basePersuasion: 20 * (1+(seasonIndex /4) * 0.5),
       baseResilience: 16 * (1+(seasonIndex /4) * 0.5),
       exp: 100,
-      topic: `Thử thách cuối năm ${seasonIndex}`,
+      topic: `Thử thách cuối năm ${year}`,
       correctAnswer: "Kiên trì học tập và rèn luyện",
       wrongAnswers: ["Bỏ cuộc", "Chỉ học lý thuyết", "Không cần thực hành"],
       knowledge: ["philosophy_book", "history_book", "politics_book", "economics_book"],
@@ -393,10 +403,11 @@ const showBossEncounter = (seasonIndex) => {
       knowledge: defaultBoss.knowledge,
       correctAnswer: defaultBoss.correctAnswer,
       wrongAnswers: defaultBoss.wrongAnswers,
-      isBoss: true
+      isBoss: true,
+      seasonIndex: seasonIndex
     };
     
-    showToast(`👑 Gặp Boss ${seasonName}!`, 'warning');
+    showToast(`👑 Gặp Boss ${defaultBoss.name}!`, 'warning');
     store.setState({
       currentPage: 'debate',
       currentOpponent: opponent,
@@ -412,9 +423,11 @@ const showBossEncounter = (seasonIndex) => {
     return;
   }
   
+  const bossTitle = bossNamesByYear[year] || bossData.name;
+  
   const opponent = {
     type: 'boss',
-    name: bossData.name,
+    name: bossTitle,
     icon: bossData.icon,
     topic: bossData.topic,
     maxConfidence: bossData.baseConfidence,
@@ -425,10 +438,12 @@ const showBossEncounter = (seasonIndex) => {
     knowledge: bossData.knowledge || [],
     correctAnswer: bossData.correctAnswer,
     wrongAnswers: bossData.wrongAnswers,
-    isBoss: true
+    isBoss: true,
+    seasonIndex: seasonIndex,
+    bossKey: bossKey // Lưu để dùng khi đánh bại
   };
   
-  showToast(`👑 Gặp Boss ${bossData.name}!`, 'warning');
+  showToast(`👑 Gặp Boss ${bossTitle}!`, 'warning');
   
   store.setState({
     currentPage: 'debate',
@@ -650,48 +665,21 @@ window.startDebate = () => {
 
 window.presentArgument = () => {
   const state = store.getState();
-  const { currentOpponent, debate } = state;
+  const { currentOpponent, debate, argumentQuiz } = state;
 
   if (!debate.scholarTurn) return;
+  
+  // If there's already an argument quiz waiting, don't create another one
+  if (argumentQuiz) return;
 
-  const stats = getScholarStats();
-  const persuasivePower = Math.max(1, stats.persuasion - currentOpponent.resilience);
-  const newOpponent = { ...currentOpponent };
-  newOpponent.currentConfidence -= persuasivePower;
-
-  const log = [...debate.log, `💡 Bạn đưa ra lập luận mạnh mẽ! Opponent -${persuasivePower} tự tin`];
-
-  if (newOpponent.currentConfidence <= 0) {
-    log.push(`🎉 Chiến thắng! +${currentOpponent.exp} EXP`);
-    gainExp(currentOpponent.exp);
-
-    // Store opponent data for quiz callback
-    const opponentData = Object.values(gameData.opponents).find(o => o.name === currentOpponent.name && o.isBoss);
-    
-    // Show quiz before handling drops
-    const randomQuestion = gameData.quizQuestions[Math.floor(Math.random() * gameData.quizQuestions.length)];
-    store.setState({
-      debateQuiz: {
-        question: randomQuestion,
-        opponentData: opponentData,
-        currentOpponent: currentOpponent,
-        answered: false
-      },
-      currentOpponent: newOpponent,
-      debate: { ...debate, log, scholarTurn: false }
-    });
-    
-    return;
-  }
-
+  // Show quiz before calculating damage
+  const randomQuestion = gameData.quizQuestions[Math.floor(Math.random() * gameData.quizQuestions.length)];
   store.setState({
-    currentOpponent: newOpponent,
-    debate: { ...debate, log, scholarTurn: false }
+    argumentQuiz: {
+      question: randomQuestion,
+      answered: false
+    }
   });
-
-  setTimeout(() => {
-    opponentCounterArgument();
-  }, 1000);
 };
 
 const opponentCounterArgument = () => {
@@ -907,6 +895,75 @@ window.answerLearningQuiz = (choiceIndex) => {
   }, 500);
 };
 
+window.answerArgumentQuiz = (choiceIndex) => {
+  const state = store.getState();
+  if (!state.argumentQuiz) return;
+  
+  const argumentQuiz = { ...state.argumentQuiz };
+  const correct = choiceIndex === argumentQuiz.question.correct;
+  
+  // Mark as answered first
+  store.setState({ argumentQuiz: { ...argumentQuiz, answered: true, correct: correct } });
+  
+  // Calculate damage multiplier: 1.5x if correct, 0.8x if wrong
+  const damageMultiplier = correct ? 1.5 : 0.8;
+  
+  // Apply damage after a short delay
+  setTimeout(() => {
+    const currentState = store.getState();
+    const { currentOpponent, debate } = currentState;
+    
+    if (!currentOpponent || !debate) return;
+    
+    const stats = getScholarStats();
+    const basePersuasivePower = Math.max(1, stats.persuasion - currentOpponent.resilience);
+    const persuasivePower = Math.floor(basePersuasivePower * damageMultiplier);
+    const newOpponent = { ...currentOpponent };
+    newOpponent.currentConfidence -= persuasivePower;
+    
+    const logMessage = correct 
+      ? `💡 Bạn đưa ra lập luận xuất sắc! (x${damageMultiplier}) Opponent -${persuasivePower} tự tin`
+      : `💡 Bạn đưa ra lập luận yếu! (x${damageMultiplier}) Opponent -${persuasivePower} tự tin`;
+    const log = [...debate.log, logMessage];
+    
+    if (newOpponent.currentConfidence <= 0) {
+      log.push(`🎉 Chiến thắng! +${currentOpponent.exp} EXP`);
+      gainExp(currentOpponent.exp);
+
+      // Store opponent data for quiz callback
+      const opponentData = currentOpponent.bossKey 
+        ? gameData.opponents[currentOpponent.bossKey]
+        : Object.values(gameData.opponents).find(o => o.name === currentOpponent.name && o.isBoss);
+      
+      // Show quiz before handling drops
+      const randomQuestion = gameData.quizQuestions[Math.floor(Math.random() * gameData.quizQuestions.length)];
+      store.setState({
+        debateQuiz: {
+          question: randomQuestion,
+          opponentData: opponentData,
+          currentOpponent: currentOpponent,
+          answered: false
+        },
+        currentOpponent: newOpponent,
+        debate: { ...debate, log, scholarTurn: false },
+        argumentQuiz: null
+      });
+      
+      return;
+    }
+
+    store.setState({
+      currentOpponent: newOpponent,
+      debate: { ...debate, log, scholarTurn: false },
+      argumentQuiz: null
+    });
+
+    setTimeout(() => {
+      opponentCounterArgument();
+    }, 1000);
+  }, 1500);
+};
+
 window.answerDebateQuiz = (choiceIndex) => {
   const state = store.getState();
   if (!state.debateQuiz) return;
@@ -962,19 +1019,36 @@ window.answerDebateQuiz = (choiceIndex) => {
       const newProvinceProgress = { ...state.provinceProgress, [state.currentProvince]: progress };
 
       setTimeout(() => {
-        stopAutoArgument();
-        store.setState({
-          currentPage: 'studying',
-          currentOpponent: null,
-          debate: null,
-          debateQuiz: null,
-          provinceProgress: newProvinceProgress,
-          studying: {
-            currentMonth: state.currentMonth,
-            canLearn: true,
-            canDebate: true
-          }
-        });
+        // Kiểm tra nếu đánh bại boss cuối (Winter 2030 - season 19)
+        const currentOpponent = state.currentOpponent;
+        if (currentOpponent && currentOpponent.isBoss && currentOpponent.seasonIndex >= 19) {
+          // Đánh bại boss cuối - kết thúc game với chiến thắng
+          stopAutoArgument();
+          store.setState({
+            currentPage: 'gameover',
+            currentOpponent: null,
+            debate: null,
+            debateQuiz: null,
+            provinceProgress: newProvinceProgress,
+            gameOverReason: 'defeated_final_boss'
+          });
+          if (studyTimer) clearInterval(studyTimer);
+        } else {
+          // Boss thường hoặc không phải boss - tiếp tục chơi
+          stopAutoArgument();
+          store.setState({
+            currentPage: 'studying',
+            currentOpponent: null,
+            debate: null,
+            debateQuiz: null,
+            provinceProgress: newProvinceProgress,
+            studying: {
+              currentMonth: state.currentMonth,
+              canLearn: true,
+              canDebate: true
+            }
+          });
+        }
       }, 1500);
     }, 500);
   } else {
@@ -1004,19 +1078,36 @@ window.answerDebateQuiz = (choiceIndex) => {
       const newProvinceProgress = { ...state.provinceProgress, [state.currentProvince]: progress };
 
       setTimeout(() => {
-        stopAutoArgument();
-        store.setState({
-          currentPage: 'studying',
-          currentOpponent: null,
-          debate: null,
-          debateQuiz: null,
-          provinceProgress: newProvinceProgress,
-          studying: {
-            currentMonth: state.currentMonth,
-            canLearn: true,
-            canDebate: true
-          }
-        });
+        // Kiểm tra nếu đánh bại boss cuối (Winter 2030 - season 19)
+        const currentOpponent = state.currentOpponent;
+        if (currentOpponent && currentOpponent.isBoss && currentOpponent.seasonIndex >= 19) {
+          // Đánh bại boss cuối - kết thúc game với chiến thắng
+          stopAutoArgument();
+          store.setState({
+            currentPage: 'gameover',
+            currentOpponent: null,
+            debate: null,
+            debateQuiz: null,
+            provinceProgress: newProvinceProgress,
+            gameOverReason: 'defeated_final_boss'
+          });
+          if (studyTimer) clearInterval(studyTimer);
+        } else {
+          // Boss thường hoặc không phải boss - tiếp tục chơi
+          stopAutoArgument();
+          store.setState({
+            currentPage: 'studying',
+            currentOpponent: null,
+            debate: null,
+            debateQuiz: null,
+            provinceProgress: newProvinceProgress,
+            studying: {
+              currentMonth: state.currentMonth,
+              canLearn: true,
+              canDebate: true
+            }
+          });
+        }
       }, 1500);
     }, 500);
   }
@@ -2113,6 +2204,49 @@ const renderLearningQuizModal = () => {
   `;
 };
 
+const renderArgumentQuizModal = () => {
+  const state = store.getState();
+  if (!state.argumentQuiz) return '';
+
+  const quiz = state.argumentQuiz;
+  const question = quiz.question;
+
+  return `
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-amber-500/50 max-w-2xl w-full shadow-2xl">
+        <div class="text-center mb-6">
+          <div class="text-5xl mb-4">💡</div>
+          <h3 class="text-2xl font-bold text-amber-400 mb-2">Kiểm tra kiến thức</h3>
+          <p class="text-slate-300 text-sm">Trả lời đúng để gây x1.5 sát thương, sai chỉ x0.8!</p>
+        </div>
+
+        <div class="mb-6">
+          <p class="text-lg font-semibold text-slate-200 mb-4">${question.question}</p>
+          <div class="space-y-3">
+            ${question.answers.map((choice, i) => `
+              <button
+                onclick="answerArgumentQuiz(${i})"
+                ${quiz.answered ? 'disabled' : ''}
+                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
+              >
+                <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span>
+                <span class="text-sm">${choice}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        ${quiz.answered ? `
+          <div class="p-4 rounded-xl ${quiz.correct ? 'bg-emerald-500/20 border border-emerald-500/50' : 'bg-red-500/20 border border-red-500/50'} text-center">
+            <p class="font-bold text-lg mb-2">${quiz.correct ? '✅ Chính xác!' : '❌ Chưa chính xác'}</p>
+            <p class="text-sm text-slate-300">${quiz.correct ? 'Sát thương x1.5!' : 'Sát thương chỉ x0.8'}</p>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+};
+
 const renderDebateQuizModal = () => {
   const state = store.getState();
   if (!state.debateQuiz) return '';
@@ -2177,16 +2311,27 @@ const renderGameOverPage = () => {
   
   const reasonText = gameOverReason === 'lost_to_boss' 
     ? 'Bị đánh bại bởi Boss' 
-    : 'Rút lui khỏi Boss';
+    : gameOverReason === 'conceded_to_boss'
+    ? 'Rút lui khỏi Boss'
+    : gameOverReason === 'defeated_final_boss'
+    ? 'Đánh bại Boss cuối cùng - Hoàn thành hành trình!'
+    : 'Kết thúc trò chơi';
   
   return `
         <div class="min-h-full p-6 bg-gradient-to-br from-red-950 via-slate-900 to-red-950">
           <div class="max-w-4xl mx-auto">
             <div class="text-center mb-8">
-              <div class="text-8xl mb-4">💀</div>
-              <h1 class="text-5xl font-black mb-4 bg-gradient-to-r from-red-400 via-rose-400 to-red-400 bg-clip-text text-transparent">
-                GAME OVER
-              </h1>
+              ${gameOverReason === 'defeated_final_boss' ? `
+                <div class="text-8xl mb-4">🏆</div>
+                <h1 class="text-5xl font-black mb-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-400 bg-clip-text text-transparent">
+                  CHIẾN THẮNG!
+                </h1>
+              ` : `
+                <div class="text-8xl mb-4">💀</div>
+                <h1 class="text-5xl font-black mb-4 bg-gradient-to-r from-red-400 via-rose-400 to-red-400 bg-clip-text text-transparent">
+                  GAME OVER
+                </h1>
+              `}
               <p class="text-xl text-slate-300 mb-2">${reasonText}</p>
               <p class="text-lg text-amber-400 font-bold">Điểm số: ${totalScore.toLocaleString()}</p>
             </div>
@@ -2348,6 +2493,7 @@ const render = () => {
         </div>
         ${renderQuizModal()}
         ${renderLearningQuizModal()}
+        ${renderArgumentQuizModal()}
         ${renderDebateQuizModal()}
         ${renderToast()}
       `;
@@ -2374,8 +2520,8 @@ const render = () => {
 window.selectProvinceFromMap = (provinceId) => {
   const province = gameData.provinces.find(p => p.id === provinceId);
   if (province) {
-    store.setState({ currentProvince: provinceId });
-    store.setState({ currentPage: 'studying' });
+    // Sử dụng startStudying để đảm bảo studying state được khởi tạo đúng cách
+    window.startStudying(provinceId);
     showToast(`📍 Đã chọn ${province.name}`, 'success');
   }
 };

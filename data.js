@@ -528,6 +528,52 @@ window.gameData = {
       correctAnswer: "Bỏ qua chế độ TBCN, xây dựng CNXH phù hợp điều kiện VN",
       wrongAnswers: ["Phải trải qua TBCN", "Theo mô hình phương Tây", "Không thể xây dựng CNXH"],
       knowledge: ["politics_book", "economics_book", "philosophy_book", "interview_record"]
+    },
+    // Boss opponents
+    tri_nhan: {
+      name: "Trí Nhân",
+      icon: "👑",
+      baseConfidence: 100,
+      basePersuasion: 30,
+      baseResilience: 28,
+      exp: 150,
+      topic: "Tư tưởng Hồ Chí Minh về Đảng và Nhà nước",
+      correctAnswer: "Đảng lãnh đạo, Nhà nước quản lý, Nhân dân làm chủ",
+      wrongAnswers: ["Đảng độc quyền", "Nhà nước độc tài", "Nhân dân không có quyền"],
+      knowledge: ["politics_book", "philosophy_book", "history_book", "economics_book"],
+      isBoss: true,
+      dropRate: 0.5,
+      dropItems: ["ho_chi_minh_mausoleum", "one_pillar_pagoda", "temple_of_literature"]
+    },
+    nguyen_vu: {
+      name: "Nguyên Vũ",
+      icon: "👑",
+      baseConfidence: 120,
+      basePersuasion: 35,
+      baseResilience: 32,
+      exp: 200,
+      topic: "Vận dụng tư tưởng Hồ Chí Minh trong thời đại mới",
+      correctAnswer: "Kế thừa và phát triển sáng tạo tư tưởng Hồ Chí Minh",
+      wrongAnswers: ["Áp dụng máy móc", "Bỏ qua tư tưởng cũ", "Chỉ học lý thuyết"],
+      knowledge: ["politics_book", "philosophy_book", "history_book", "economics_book", "culture_book"],
+      isBoss: true,
+      dropRate: 0.6,
+      dropItems: ["imperial_city", "thien_mu_pagoda", "hoi_an_ancient_town"]
+    },
+    hoang_nguyen: {
+      name: "Hoàng Nguyên",
+      icon: "👑",
+      baseConfidence: 150,
+      basePersuasion: 40,
+      baseResilience: 38,
+      exp: 300,
+      topic: "Xây dựng và phát triển đất nước theo tư tưởng Hồ Chí Minh",
+      correctAnswer: "Độc lập dân tộc gắn liền với CNXH, dân giàu nước mạnh",
+      wrongAnswers: ["Chỉ phát triển kinh tế", "Bỏ qua độc lập dân tộc", "Theo mô hình nước ngoài"],
+      knowledge: ["politics_book", "philosophy_book", "history_book", "economics_book", "culture_book", "society_book"],
+      isBoss: true,
+      dropRate: 0.7,
+      dropItems: ["independence_palace", "ben_thanh_market", "cu_chi_tunnels"]
     }
   },
 
