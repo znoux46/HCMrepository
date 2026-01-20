@@ -1,307 +1,586 @@
-// mapCanvas.js - Interactive Vietnam Map Canvas
-// Tọa độ các tỉnh thành Việt Nam (tỉ lệ canvas 800x1000)
+// mapCanvas.js - Interactive Vietnam Map Canvas with Real GeoJSON Data
+// Phong cách Pixel Art với dữ liệu thật 100% từ VietNamMap.json
 
 const createMapCanvas = () => {
   const canvas = document.createElement('canvas');
   canvas.id = 'vietnam-map-canvas';
-  // Tăng kích thước canvas để có nhiều padding hơn xung quanh bản đồ
-  canvas.width = 900;
-  canvas.height = 1100;
+  canvas.width = 1100;
+  canvas.height = 1200;
   canvas.style.cursor = 'pointer';
   canvas.style.maxWidth = '100%';
   canvas.style.height = 'auto';
-  canvas.style.border = '2px solid rgba(251, 191, 36, 0.3)';
-  canvas.style.borderRadius = '12px';
+  canvas.style.border = '3px solid #fbbf24';
+  canvas.style.borderRadius = '16px';
+  canvas.style.boxShadow = '0 10px 40px rgba(251, 191, 36, 0.3)';
+  canvas.style.imageRendering = 'pixelated'; // Pixel art style
   
   const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false; // Crisp pixel rendering
 
-  // Transform để bản đồ tận dụng gần hết chiều cao canvas và giãn đều theo trục dọc.
-  // Dùng hệ toạ độ gốc để nội suy lại vào khung canvas với padding.
-  const ORIGINAL_X_MIN = 200;
-  const ORIGINAL_X_MAX = 600;
-  const ORIGINAL_Y_MIN = 80;
-  const ORIGINAL_Y_MAX = 1000;
-
-  const PADDING_X = 90;
-  const PADDING_TOP = 40;
-  const PADDING_BOTTOM = 80;
-
-  const transformPoint = ([x, y]) => {
-    // Chuẩn hoá X vào [0,1] rồi map vào khung có padding ngang
-    let nx = (x - ORIGINAL_X_MIN) / (ORIGINAL_X_MAX - ORIGINAL_X_MIN);
-    nx = Math.min(Math.max(nx, 0), 1);
-    const tx = PADDING_X + nx * (canvas.width - 2 * PADDING_X);
-
-    // Chuẩn hoá Y vào [0,1]
-    let ny = (y - ORIGINAL_Y_MIN) / (ORIGINAL_Y_MAX - ORIGINAL_Y_MIN);
-    ny = Math.min(Math.max(ny, 0), 1);
-
-    // Ưu tiên dãn phần phía Nam: ny^1.15 làm miền Bắc hơi nén, miền Nam giãn
-    ny = Math.pow(ny, 1.15);
-
-    const ty = PADDING_TOP + ny * (canvas.height - PADDING_TOP - PADDING_BOTTOM);
-
-    return [tx, ty];
-  };
-
-  // Dữ liệu tọa độ các tỉnh thành (dựa trên vị trí địa lý thực tế)
-  const provincePaths = {
-    // Miền Bắc
-    'hanoi': { path: [[320, 180], [360, 180], [360, 210], [320, 210]], center: [340, 195], name: 'Hà Nội' },
-    'ha_giang': { path: [[280, 80], [320, 80], [320, 120], [280, 120]], center: [300, 100], name: 'Hà Giang' },
-    'cao_bang': { path: [[340, 100], [380, 100], [380, 140], [340, 140]], center: [360, 120], name: 'Cao Bằng' },
-    'bac_kan': { path: [[320, 140], [360, 140], [360, 170], [320, 170]], center: [340, 155], name: 'Bắc Kạn' },
-    'tuyen_quang': { path: [[300, 160], [340, 160], [340, 190], [300, 190]], center: [320, 175], name: 'Tuyên Quang' },
-    'lao_cai': { path: [[260, 120], [300, 120], [300, 160], [260, 160]], center: [280, 140], name: 'Lào Cai' },
-    'dien_bien': { path: [[200, 140], [240, 140], [240, 180], [200, 180]], center: [220, 160], name: 'Điện Biên' },
-    'lai_chau': { path: [[220, 120], [260, 120], [260, 150], [220, 150]], center: [240, 135], name: 'Lai Châu' },
-    'son_la': { path: [[240, 180], [280, 180], [280, 220], [240, 220]], center: [260, 200], name: 'Sơn La' },
-    'yen_bai': { path: [[280, 160], [320, 160], [320, 190], [280, 190]], center: [300, 175], name: 'Yên Bái' },
-    'hoa_binh': { path: [[300, 220], [340, 220], [340, 250], [300, 250]], center: [320, 235], name: 'Hòa Bình' },
-    'thai_nguyen': { path: [[360, 170], [400, 170], [400, 200], [360, 200]], center: [380, 185], name: 'Thái Nguyên' },
-    'lang_son': { path: [[400, 120], [440, 120], [440, 160], [400, 160]], center: [420, 140], name: 'Lạng Sơn' },
-    'quang_ninh': { path: [[440, 160], [480, 160], [480, 200], [440, 200]], center: [460, 180], name: 'Quảng Ninh' },
-    'bac_giang': { path: [[380, 200], [420, 200], [420, 230], [380, 230]], center: [400, 215], name: 'Bắc Giang' },
-    'phu_tho': { path: [[320, 210], [360, 210], [360, 240], [320, 240]], center: [340, 225], name: 'Phú Thọ' },
-    'vinh_phuc': { path: [[340, 240], [380, 240], [380, 270], [340, 270]], center: [360, 255], name: 'Vĩnh Phúc' },
-    'bac_ninh': { path: [[360, 230], [400, 230], [400, 260], [360, 260]], center: [380, 245], name: 'Bắc Ninh' },
-    'hai_duong': { path: [[400, 260], [440, 260], [440, 290], [400, 290]], center: [420, 275], name: 'Hải Dương' },
-    'hai_phong': { path: [[440, 280], [480, 280], [480, 310], [440, 310]], center: [460, 295], name: 'Hải Phòng' },
-    'hung_yen': { path: [[360, 270], [400, 270], [400, 300], [360, 300]], center: [380, 285], name: 'Hưng Yên' },
-    'ha_nam': { path: [[320, 300], [360, 300], [360, 330], [320, 330]], center: [340, 315], name: 'Hà Nam' },
-    'nam_dinh': { path: [[360, 320], [400, 320], [400, 350], [360, 350]], center: [380, 335], name: 'Nam Định' },
-    'thai_binh': { path: [[400, 330], [440, 330], [440, 360], [400, 360]], center: [420, 345], name: 'Thái Bình' },
-    'ninh_binh': { path: [[360, 350], [400, 350], [400, 380], [360, 380]], center: [380, 365], name: 'Ninh Bình' },
-    'thanh_hoa': { path: [[360, 380], [400, 380], [400, 420], [360, 420]], center: [380, 400], name: 'Thanh Hóa' },
-    'nghe_an': { path: [[340, 420], [380, 420], [380, 460], [340, 460]], center: [360, 440], name: 'Nghệ An' },
-    'ha_tinh': { path: [[380, 460], [420, 460], [420, 500], [380, 500]], center: [400, 480], name: 'Hà Tĩnh' },
-    
-    // Miền Trung
-    'quang_binh': { path: [[400, 500], [440, 500], [440, 540], [400, 540]], center: [420, 520], name: 'Quảng Bình' },
-    'quang_tri': { path: [[400, 540], [440, 540], [440, 580], [400, 580]], center: [420, 560], name: 'Quảng Trị' },
-    'hue': { path: [[420, 580], [460, 580], [460, 620], [420, 620]], center: [440, 600], name: 'Thừa Thiên Huế' },
-    'quang_nam': { path: [[440, 620], [480, 620], [480, 660], [440, 660]], center: [460, 640], name: 'Quảng Nam' },
-    'da_nang': { path: [[460, 640], [500, 640], [500, 670], [460, 670]], center: [480, 655], name: 'Đà Nẵng' },
-    'quang_ngai': { path: [[480, 660], [520, 660], [520, 700], [480, 700]], center: [500, 680], name: 'Quảng Ngãi' },
-    'binh_dinh': { path: [[500, 700], [540, 700], [540, 740], [500, 740]], center: [520, 720], name: 'Bình Định' },
-    'phu_yen': { path: [[520, 740], [560, 740], [560, 780], [520, 780]], center: [540, 760], name: 'Phú Yên' },
-    'khanh_hoa': { path: [[540, 780], [580, 780], [580, 820], [540, 820]], center: [560, 800], name: 'Khánh Hòa' },
-    'ninh_thuan': { path: [[560, 820], [600, 820], [600, 860], [560, 860]], center: [580, 840], name: 'Ninh Thuận' },
-    'binh_thuan': { path: [[540, 860], [580, 860], [580, 900], [540, 900]], center: [560, 880], name: 'Bình Thuận' },
-    'kon_tum': { path: [[480, 700], [520, 700], [520, 740], [480, 740]], center: [500, 720], name: 'Kon Tum' },
-    'gia_lai': { path: [[500, 740], [540, 740], [540, 780], [500, 780]], center: [520, 760], name: 'Gia Lai' },
-    'dak_lak': { path: [[520, 780], [560, 780], [560, 820], [520, 820]], center: [540, 800], name: 'Đắk Lắk' },
-    'dak_nong': { path: [[500, 820], [540, 820], [540, 860], [500, 860]], center: [520, 840], name: 'Đắk Nông' },
-    'lam_dong': { path: [[520, 860], [560, 860], [560, 900], [520, 900]], center: [540, 880], name: 'Lâm Đồng' },
-    
-    // Miền Nam
-    'ho_chi_minh_city': { path: [[480, 900], [540, 900], [540, 960], [480, 960]], center: [510, 930], name: 'TP. Hồ Chí Minh' },
-    'can_tho': { path: [[420, 960], [480, 960], [480, 1000], [420, 1000]], center: [450, 980], name: 'Cần Thơ' },
-    'binh_phuoc': { path: [[540, 880], [580, 880], [580, 920], [540, 920]], center: [560, 900], name: 'Bình Phước' },
-    'tay_ninh': { path: [[500, 920], [540, 920], [540, 960], [500, 960]], center: [520, 940], name: 'Tây Ninh' },
-    'binh_duong': { path: [[520, 900], [560, 900], [560, 940], [520, 940]], center: [540, 920], name: 'Bình Dương' },
-    'dong_nai': { path: [[540, 900], [580, 900], [580, 940], [540, 940]], center: [560, 920], name: 'Đồng Nai' },
-    'ba_ria_vung_tau': { path: [[560, 920], [600, 920], [600, 960], [560, 960]], center: [580, 940], name: 'Bà Rịa - Vũng Tàu' },
-    'long_an': { path: [[440, 940], [480, 940], [480, 980], [440, 980]], center: [460, 960], name: 'Long An' },
-    'tien_giang': { path: [[460, 960], [500, 960], [500, 1000], [460, 1000]], center: [480, 980], name: 'Tiền Giang' },
-    'ben_tre': { path: [[480, 960], [520, 960], [520, 990], [480, 990]], center: [500, 975], name: 'Bến Tre' },
-    'tra_vinh': { path: [[500, 960], [540, 960], [540, 990], [500, 990]], center: [520, 975], name: 'Trà Vinh' },
-    'vinh_long': { path: [[440, 960], [480, 960], [480, 990], [440, 990]], center: [460, 975], name: 'Vĩnh Long' },
-    'dong_thap': { path: [[400, 940], [440, 940], [440, 980], [400, 980]], center: [420, 960], name: 'Đồng Tháp' },
-    'an_giang': { path: [[380, 960], [420, 960], [420, 990], [380, 990]], center: [400, 975], name: 'An Giang' },
-    'kien_giang': { path: [[360, 940], [400, 940], [400, 980], [360, 980]], center: [380, 960], name: 'Kiên Giang' },
-    'ca_mau': { path: [[340, 970], [380, 970], [380, 1000], [340, 1000]], center: [360, 985], name: 'Cà Mau' },
-    'bac_lieu': { path: [[380, 970], [420, 970], [420, 1000], [380, 1000]], center: [400, 985], name: 'Bạc Liêu' },
-    'soc_trang': { path: [[420, 960], [460, 960], [460, 990], [420, 990]], center: [440, 975], name: 'Sóc Trăng' },
-    'hau_giang': { path: [[400, 970], [440, 970], [440, 1000], [400, 1000]], center: [420, 985], name: 'Hậu Giang' }
-  };
-  
-  // Các điểm đảo trên biển gắn với tỉnh tương ứng
-  const seaIslands = [
-    {
-      id: 'hoang_sa',
-      provinceId: 'da_nang',
-      name: 'Hoàng Sa',
-      coord: [620, 640] // ngoài khơi miền Trung
-    },
-    {
-      id: 'truong_sa',
-      provinceId: 'khanh_hoa',
-      name: 'Trường Sa',
-      coord: [640, 780] // xa hơn xuống phía Nam
-    },
-    {
-      id: 'phu_quoc',
-      provinceId: 'kien_giang',
-      name: 'Phú Quốc',
-      coord: [280, 960] // ngoài khơi phía Tây Nam, thuộc Kiên Giang
-    }
-  ];
-
-  // Nhóm các tỉnh miền Nam (để thu nhỏ vùng chọn một chút)
-  const southernProvinces = new Set([
-    'lam_dong',
-    'binh_phuoc', 'tay_ninh', 'binh_duong', 'dong_nai', 'ba_ria_vung_tau',
-    'long_an', 'tien_giang', 'ben_tre', 'tra_vinh', 'vinh_long',
-    'dong_thap', 'an_giang', 'kien_giang', 'ca_mau', 'bac_lieu',
-    'soc_trang', 'hau_giang', 'can_tho', 'ho_chi_minh_city'
-  ]);
-
+  let geoData = null;
   let hoveredProvince = null;
   let selectedProvince = null;
   
+  // Bảng màu pixel art đẹp mắt cho từng vùng
+  const regionColors = {
+    // Miền Bắc - Xanh dương và tím
+    'north': {
+      base: '#60a5fa',      // Blue 400
+      hover: '#3b82f6',     // Blue 500
+      selected: '#2563eb',  // Blue 600
+      border: '#1e40af'     // Blue 800
+    },
+    // Đồng bằng Bắc Bộ - Xanh lá
+    'delta': {
+      base: '#34d399',      // Emerald 400
+      hover: '#10b981',     // Emerald 500
+      selected: '#059669',  // Emerald 600
+      border: '#047857'     // Emerald 700
+    },
+    // Miền Trung - Vàng cam
+    'central': {
+      base: '#fbbf24',      // Amber 400
+      hover: '#f59e0b',     // Amber 500
+      selected: '#d97706',  // Amber 600
+      border: '#b45309'     // Amber 700
+    },
+    // Tây Nguyên - Nâu đỏ
+    'highland': {
+      base: '#f87171',      // Red 400
+      hover: '#ef4444',     // Red 500
+      selected: '#dc2626',  // Red 600
+      border: '#991b1b'     // Red 800
+    },
+    // Miền Nam - Hồng tím
+    'south': {
+      base: '#c084fc',      // Purple 400
+      hover: '#a855f7',     // Purple 500
+      selected: '#9333ea',  // Purple 600
+      border: '#6b21a8'     // Purple 800
+    },
+    // Đồng bằng sông Cửu Long - Xanh ngọc
+    'mekong': {
+      base: '#2dd4bf',      // Teal 400
+      hover: '#14b8a6',     // Teal 500
+      selected: '#0d9488',  // Teal 600
+      border: '#0f766e'     // Teal 700
+    }
+  };
+
+  // Mapping từ GeoJSON province name sang game data province ID
+  const provinceNameToId = {
+    'AnGiang': 'an_giang', 'BaRia-VungTau': 'ba_ria_vung_tau', 'BacGiang': 'bac_giang',
+    'BacKan': 'bac_kan', 'BacLieu': 'bac_lieu', 'BacNinh': 'bac_ninh',
+    'BenTre': 'ben_tre', 'BinhDinh': 'binh_dinh', 'BinhDuong': 'binh_duong',
+    'BinhPhuoc': 'binh_phuoc', 'BinhThuan': 'binh_thuan', 'CaMau': 'ca_mau',
+    'CanTho': 'can_tho', 'CaoBang': 'cao_bang', 'DaNang': 'da_nang',
+    'DakLak': 'dak_lak', 'DakNong': 'dak_nong', 'DienBien': 'dien_bien',
+    'DongNai': 'dong_nai', 'DongThap': 'dong_thap', 'GiaLai': 'gia_lai',
+    'HaGiang': 'ha_giang', 'HaNam': 'ha_nam', 'HaNoi': 'hanoi',
+    'HaTinh': 'ha_tinh', 'HaiDuong': 'hai_duong', 'HaiPhong': 'hai_phong',
+    'HauGiang': 'hau_giang', 'HoChiMinh': 'ho_chi_minh_city', 'HoaBinh': 'hoa_binh',
+    'HungYen': 'hung_yen', 'KhanhHoa': 'khanh_hoa', 'KienGiang': 'kien_giang',
+    'KonTum': 'kon_tum', 'LaiChau': 'lai_chau', 'LamDong': 'lam_dong',
+    'LangSon': 'lang_son', 'LaoCai': 'lao_cai', 'LongAn': 'long_an',
+    'NamDinh': 'nam_dinh', 'NgheAn': 'nghe_an', 'NinhBinh': 'ninh_binh',
+    'NinhThuan': 'ninh_thuan', 'PhuTho': 'phu_tho', 'PhuYen': 'phu_yen',
+    'QuangBinh': 'quang_binh', 'QuangNam': 'quang_nam', 'QuangNgai': 'quang_ngai',
+    'QuangNinh': 'quang_ninh', 'QuangTri': 'quang_tri', 'SocTrang': 'soc_trang',
+    'SonLa': 'son_la', 'TayNinh': 'tay_ninh', 'ThaiBinh': 'thai_binh',
+    'ThaiNguyen': 'thai_nguyen', 'ThanhHoa': 'thanh_hoa', 'ThuaThienHue': 'hue',
+    'TienGiang': 'tien_giang', 'TraVinh': 'tra_vinh', 'TuyenQuang': 'tuyen_quang',
+    'VinhLong': 'vinh_long', 'VinhPhuc': 'vinh_phuc', 'YenBai': 'yen_bai'
+  };
+
+  // Phân loại tỉnh thành theo vùng
+  const provinceRegions = {
+    // Miền Bắc
+    'HaGiang': 'north', 'CaoBang': 'north', 'BacKan': 'north', 
+    'TuyenQuang': 'north', 'LaoCai': 'north', 'YenBai': 'north',
+    'LaiChau': 'north', 'SonLa': 'north', 'DienBien': 'north',
+    'ThaiNguyen': 'north', 'LangSon': 'north', 'BacGiang': 'north',
+    'PhuTho': 'north', 'QuangNinh': 'north', 'HoaBinh': 'north',
+    
+    // Đồng bằng Bắc Bộ
+    'HaNoi': 'delta', 'VinhPhuc': 'delta', 'BacNinh': 'delta',
+    'HaiDuong': 'delta', 'HaiPhong': 'delta', 'HungYen': 'delta',
+    'ThaiBinh': 'delta', 'HaNam': 'delta', 'NamDinh': 'delta',
+    'NinhBinh': 'delta', 'ThanhHoa': 'delta',
+    
+    // Miền Trung
+    'NgheAn': 'central', 'HaTinh': 'central', 'QuangBinh': 'central',
+    'QuangTri': 'central', 'ThuaThienHue': 'central', 'DaNang': 'central',
+    'QuangNam': 'central', 'QuangNgai': 'central', 'BinhDinh': 'central',
+    'PhuYen': 'central', 'KhanhHoa': 'central', 'NinhThuan': 'central',
+    'BinhThuan': 'central',
+    
+    // Tây Nguyên
+    'KonTum': 'highland', 'GiaLai': 'highland', 'DakLak': 'highland',
+    'DakNong': 'highland', 'LamDong': 'highland',
+    
+    // Đông Nam Bộ
+    'BinhPhuoc': 'south', 'TayNinh': 'south', 'BinhDuong': 'south',
+    'DongNai': 'south', 'BaRia-VungTau': 'south', 'HoChiMinh': 'south',
+    
+    // Đồng bằng sông Cửu Long
+    'LongAn': 'mekong', 'TienGiang': 'mekong', 'BenTre': 'mekong',
+    'TraVinh': 'mekong', 'VinhLong': 'mekong', 'DongThap': 'mekong',
+    'AnGiang': 'mekong', 'KienGiang': 'mekong', 'CanTho': 'mekong',
+    'HauGiang': 'mekong', 'SocTrang': 'mekong', 'BacLieu': 'mekong',
+    'CaMau': 'mekong'
+  };
+
+  // Quần đảo Hoàng Sa, Trường Sa và đảo Phú Quốc
+  const vietnamIslands = [
+    {
+      name: 'Quần đảo Hoàng Sa',
+      nameEn: 'Paracel Islands',
+      icon: '🏝️',
+      lon: 112.0,
+      lat: 16.5,
+      description: 'Quần đảo Hoàng Sa thuộc chủ quyền Việt Nam',
+      color: '#ef4444' // Red for sovereignty
+    },
+    {
+      name: 'Quần đảo Trường Sa',
+      nameEn: 'Spratly Islands',
+      icon: '🏝️',
+      lon: 114.0,   
+      lat: 10.0,
+      description: 'Quần đảo Trường Sa thuộc chủ quyền Việt Nam',
+      color: '#ef4444' // Red for sovereignty
+    },
+    {
+      name: 'Đảo Phú Quốc',
+      nameEn: 'Phu Quoc Island',
+      icon: '🏖️',
+      lon: 103.97,
+      lat: 10.22,
+      description: 'Đảo ngọc Phú Quốc - Kiên Giang',
+      color: '#14b8a6' // Teal cho đảo du lịch
+    }
+  ];
+
+  // Load GeoJSON data
+  const loadGeoData = async () => {
+    try {
+      const response = await fetch('VietNamMap.json');
+      geoData = await response.json();
+      console.log('GeoJSON loaded:', geoData);
+      drawMap();
+    } catch (error) {
+      console.error('Error loading GeoJSON:', error);
+      drawErrorMessage();
+    }
+  };
+
+  // Chuyển đổi tọa độ địa lý (longitude, latitude) sang tọa độ canvas
+  const projectToCanvas = (lon, lat) => {
+    // Vietnam bounds: longitude 102-115 (bao gồm Hoàng Sa, Trường Sa), latitude 8-24
+    const lonMin = 102, lonMax = 115;
+    const latMin = 8, latMax = 24;
+    
+    const padding = 50;
+    const width = canvas.width - 2 * padding;
+    const height = canvas.height - 2 * padding;
+    
+    const x = padding + ((lon - lonMin) / (lonMax - lonMin)) * width;
+    const y = padding + ((latMax - lat) / (latMax - latMin)) * height;
+    
+    return [x, y];
+  };
+
+  // Lấy màu sắc cho tỉnh
+  const getProvinceColor = (provinceName, state = 'base') => {
+    const region = provinceRegions[provinceName] || 'central';
+    return regionColors[region][state] || regionColors.central[state];
+  };
+
+  // Vẽ một polygon với phong cách pixel
+  const drawPixelPolygon = (coordinates, fillColor, borderColor, lineWidth = 2) => {
+    if (!coordinates || coordinates.length === 0) return;
+    
+    // Handle MultiPolygon - vẽ polygon lớn nhất
+    let mainPolygon = coordinates;
+    if (coordinates[0] && Array.isArray(coordinates[0][0]) && Array.isArray(coordinates[0][0][0])) {
+      // Find largest polygon
+      mainPolygon = coordinates.reduce((largest, current) => {
+        return (current[0] && current[0].length > (largest[0] ? largest[0].length : 0)) ? current : largest;
+      }, coordinates[0]);
+    }
+    
+    const ring = mainPolygon[0] || mainPolygon;
+    if (!ring || ring.length < 3) return;
+    
+    // Filter các điểm có tọa độ bất thường (lỗi dữ liệu trong GeoJSON)
+    const validRing = ring.filter(point => {
+      const [lon, lat] = point;
+      return lon >= 102 && lon <= 115 && lat >= 8 && lat <= 24;
+    });
+    
+    if (validRing.length < 3) return;
+    
+    ctx.beginPath();
+    const [startX, startY] = projectToCanvas(validRing[0][0], validRing[0][1]);
+    ctx.moveTo(Math.floor(startX), Math.floor(startY));
+    
+    for (let i = 1; i < validRing.length; i++) {
+      const [x, y] = projectToCanvas(validRing[i][0], validRing[i][1]);
+      ctx.lineTo(Math.floor(x), Math.floor(y));
+    }
+    ctx.closePath();
+    
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+    
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  };
+
+  // Tính centroid của polygon để đặt label
+  const getPolygonCentroid = (coordinates) => {
+    if (!coordinates || coordinates.length === 0) return null;
+    
+    let ring = coordinates;
+    if (Array.isArray(coordinates[0]) && Array.isArray(coordinates[0][0]) && Array.isArray(coordinates[0][0][0])) {
+      ring = coordinates[0][0];
+    } else if (Array.isArray(coordinates[0]) && Array.isArray(coordinates[0][0])) {
+      ring = coordinates[0];
+    }
+    
+    if (!ring || ring.length === 0) return null;
+    
+    let sumLon = 0, sumLat = 0;
+    for (const point of ring) {
+      sumLon += point[0];
+      sumLat += point[1];
+    }
+    
+    return [sumLon / ring.length, sumLat / ring.length];
+  };
+
   // Vẽ bản đồ
   const drawMap = () => {
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!geoData) return;
     
-    // Background đơn sắc
-    ctx.fillStyle = 'rgba(15, 23, 42, 1)';
+    // Clear canvas với gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#0f172a');  // Slate 900
+    gradient.addColorStop(1, '#1e293b');  // Slate 800
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Vẽ từng tỉnh dưới dạng ô vuông quanh tâm (dễ nhìn & dễ giãn khoảng cách)
-    Object.entries(provincePaths).forEach(([id, data]) => {
-      const isHovered = hoveredProvince === id;
-      const isSelected = selectedProvince === id;
-      const [cx, cy] = transformPoint(data.center);
-
-      const size = southernProvinces.has(id) ? 28 : 30;
-
-      ctx.beginPath();
-      ctx.rect(cx - size / 2, cy - size / 2, size, size);
-
-      // Tô màu tỉnh cho dễ nhìn / dễ chọn
-      if (isSelected) {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.7)'; // Amber selected
-      } else if (isHovered) {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.5)'; // Amber hover
-      } else {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.4)'; // Slate default
-      }
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.8)';
-      ctx.lineWidth = isHovered || isSelected ? 2 : 1;
-      ctx.fill();
-      ctx.stroke();
-
-      // Marker & tên tỉnh (chỉ hiển thị khi hover hoặc selected)
+    
+    // Vẽ title
+    ctx.save();
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 28px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('🇻🇳 BẢN ĐỒ VIỆT NAM', canvas.width / 2, 35);
+    ctx.restore();
+    
+    // Vẽ tất cả các tỉnh
+    geoData.features.forEach(feature => {
+      const provinceName = feature.properties.VARNAME_1 || feature.properties.NAME_1;
+      const isHovered = hoveredProvince === provinceName;
+      const isSelected = selectedProvince === provinceName;
+      
+      const state = isSelected ? 'selected' : isHovered ? 'hover' : 'base';
+      const fillColor = getProvinceColor(provinceName, state);
+      const borderColor = getProvinceColor(provinceName, 'border');
+      const lineWidth = isSelected ? 4 : isHovered ? 3 : 2;
+      
+      drawPixelPolygon(feature.geometry.coordinates, fillColor, borderColor, lineWidth);
+      
+      // Vẽ label cho tỉnh đang hover hoặc selected
       if (isHovered || isSelected) {
-        // Marker hình vuông nhỏ
-        ctx.save();
-        ctx.fillStyle = isSelected ? 'rgba(251, 191, 36, 0.9)' : 'rgba(251, 191, 36, 0.7)';
-        const size = 10;
-        ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
-        ctx.restore();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px Lexend, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
-        // Background cho text để dễ đọc
-        const textWidth = ctx.measureText(data.name).width;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(cx - textWidth/2 - 4, cy - 18, textWidth + 8, 16);
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(data.name, cx, cy - 10);
+        const centroid = getPolygonCentroid(feature.geometry.coordinates);
+        if (centroid) {
+          const [cx, cy] = projectToCanvas(centroid[0], centroid[1]);
+          
+          // Background cho text (pixel style)
+          const displayName = feature.properties.NAME_1;
+          ctx.font = 'bold 13px monospace';
+          const textWidth = ctx.measureText(displayName).width;
+          
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+          const boxPadding = 6;
+          ctx.fillRect(
+            Math.floor(cx - textWidth / 2 - boxPadding),
+            Math.floor(cy - 20),
+            Math.ceil(textWidth + boxPadding * 2),
+            22
+          );
+          
+          // Border cho text box
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(
+            Math.floor(cx - textWidth / 2 - boxPadding),
+            Math.floor(cy - 20),
+            Math.ceil(textWidth + boxPadding * 2),
+            22
+          );
+          
+          // Text
+          ctx.fillStyle = '#ffffff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(displayName, Math.floor(cx), Math.floor(cy - 9));
+        }
       }
     });
+    
+    // Vẽ các quần đảo Hoàng Sa và Trường Sa
+    drawIslands();
+    
+    // Vẽ legend
+    drawLegend();
+  };
 
-    // Vẽ các đảo Hoàng Sa / Trường Sa
-    seaIslands.forEach(island => {
-      const [ix, iy] = transformPoint(island.coord);
-
-      // Vòng tròn đảo
+  // Vẽ các quần đảo Hoàng Sa và Trường Sa
+  const drawIslands = () => {
+    vietnamIslands.forEach(island => {
+      const [x, y] = projectToCanvas(island.lon, island.lat);
+      
+      // Vẽ vòng tròn đại diện cho quần đảo
+      ctx.save();
+      
+      // Vẽ main circle (không dùng shadow để tránh artifact)
+      ctx.fillStyle = island.color;
       ctx.beginPath();
-      ctx.arc(ix, iy, 6, 0, Math.PI * 2);
-      const isHovered = hoveredProvince === island.provinceId;
-      const isSelected = selectedProvince === island.provinceId;
-      ctx.fillStyle = isSelected
-        ? 'rgba(251, 191, 36, 0.9)'
-        : isHovered
-          ? 'rgba(251, 191, 36, 0.7)'
-          : 'rgba(248, 250, 252, 0.8)';
-      ctx.strokeStyle = 'rgba(15, 23, 42, 0.9)';
-      ctx.lineWidth = 1.5;
+      ctx.arc(Math.floor(x), Math.floor(y), 8, 0, Math.PI * 2);
+      ctx.closePath();
       ctx.fill();
+      
+      // Inner circle
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(Math.floor(x), Math.floor(y), 5, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+      
+      // Border
+      ctx.strokeStyle = island.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(Math.floor(x), Math.floor(y), 8, 0, Math.PI * 2);
+      ctx.closePath();
       ctx.stroke();
+      
+      ctx.restore();
+      
+      // Label
+      ctx.save();
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      // Background cho text
+      const textWidth = ctx.measureText(island.name).width;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      ctx.fillRect(
+        Math.floor(x - textWidth / 2 - 6),
+        Math.floor(y + 12),
+        Math.ceil(textWidth + 12),
+        20
+      );
+      
+      // Border cho text box
+      ctx.strokeStyle = island.color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(
+        Math.floor(x - textWidth / 2 - 6),
+        Math.floor(y + 12),
+        Math.ceil(textWidth + 12),
+        20
+      );
+      
+      // Text
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(island.name, Math.floor(x), Math.floor(y + 22));
+      
+      // Icon
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(island.icon, Math.floor(x), Math.floor(y - 1));
+      
+      ctx.restore();
+    });
+  };
 
-      // Nhãn đảo
-      ctx.fillStyle = '#e5e7eb';
-      ctx.font = 'bold 10px Lexend, sans-serif';
+  // Vẽ legend (chú thích màu sắc)
+  const drawLegend = () => {
+    const legendData = [
+      { name: 'Miền Bắc', color: regionColors.north.base },
+      { name: 'Đồng bằng BB', color: regionColors.delta.base },
+      { name: 'Miền Trung', color: regionColors.central.base },
+      { name: 'Tây Nguyên', color: regionColors.highland.base },
+      { name: 'Đông Nam Bộ', color: regionColors.south.base },
+      { name: 'Đồng bằng SCL', color: regionColors.mekong.base }
+    ];
+    
+    const startX = 20;
+    const startY = canvas.height - 140;
+    const boxSize = 16;
+    const spacing = 22;
+    
+    ctx.save();
+    
+    // Background cho legend
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(startX - 5, startY - 5, 160, spacing * legendData.length + 10);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startX - 5, startY - 5, 160, spacing * legendData.length + 10);
+    
+    legendData.forEach((item, index) => {
+      const y = startY + index * spacing;
+      
+      // Color box
+      ctx.fillStyle = item.color;
+      ctx.fillRect(startX, y, boxSize, boxSize);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(startX, y, boxSize, boxSize);
+      
+      // Label
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '11px monospace';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-    //   const label = island.name + (island.provinceId === 'da_nang' ? ' (Đà Nẵng)' : ' (Khánh Hòa)');
+      ctx.fillText(item.name, startX + boxSize + 8, y + boxSize / 2);
+    });
+    
+    ctx.restore();
+  };
 
-    let provinceSuffix = '';
+  // Vẽ thông báo lỗi
+  const drawErrorMessage = () => {
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ef4444';
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚠️ Không thể tải dữ liệu bản đồ', canvas.width / 2, canvas.height / 2);
+    ctx.font = '14px monospace';
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillText('Vui lòng kiểm tra file VietNamMap.json', canvas.width / 2, canvas.height / 2 + 30);
+  };
 
-    switch (island.provinceId) {
-      case 'da_nang':
-        provinceSuffix = ' (Đà Nẵng)';
-        break;
-      case 'khanh_hoa':
-        provinceSuffix = ' (Khánh Hòa)';
-        break;
-      case 'kien_giang':
-        provinceSuffix = ' (Kiên Giang)';
-        break;
-      default:
-        provinceSuffix = '';
+  // Kiểm tra điểm có trong polygon không
+  const pointInPolygon = (point, polygon) => {
+    if (!polygon || polygon.length === 0) return false;
+    
+    // Xử lý MultiPolygon - kiểm tra tất cả các polygon
+    if (Array.isArray(polygon[0]) && Array.isArray(polygon[0][0]) && Array.isArray(polygon[0][0][0])) {
+      // MultiPolygon: [[[polygon1]], [[polygon2]], ...]
+      for (const multiPoly of polygon) {
+        if (checkSinglePolygon(point, multiPoly[0])) {
+          return true;
+        }
+      }
+      return false;
     }
     
-    const label = island.name + provinceSuffix;    ctx.fillText(label, ix + 10, iy);
-    });
+    // Single Polygon hoặc Polygon with holes
+    let ring = polygon;
+    if (Array.isArray(polygon[0]) && Array.isArray(polygon[0][0])) {
+      ring = polygon[0];
+    }
+    
+    return checkSinglePolygon(point, ring);
   };
   
-  // Kiểm tra điểm có trong polygon không (Point-in-Polygon algorithm)
-  const pointInPolygon = (point, polygon) => {
+  // Helper function để check một polygon đơn
+  const checkSinglePolygon = (point, ring) => {
+    if (!ring || ring.length < 3) return false;
+    
+    const [testX, testY] = point;
     let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const xi = polygon[i][0], yi = polygon[i][1];
-      const xj = polygon[j][0], yj = polygon[j][1];
-      const intersect = ((yi > point[1]) !== (yj > point[1]))
-        && (point[0] < (xj - xi) * (point[1] - yi) / (yj - yi) + xi);
+    
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [lonI, latI] = ring[i];
+      const [lonJ, latJ] = ring[j];
+      const [xi, yi] = projectToCanvas(lonI, latI);
+      const [xj, yj] = projectToCanvas(lonJ, latJ);
+      
+      const intersect = ((yi > testY) !== (yj > testY))
+        && (testX < (xj - xi) * (testY - yi) / (yj - yi) + xi);
       if (intersect) inside = !inside;
     }
+    
     return inside;
   };
-  
-  // Lấy tỉnh tại tọa độ (dựa trên vùng tròn quanh tâm tỉnh, thay vì cả polygon)
+
+  // Lấy tỉnh tại tọa độ canvas
   const getProvinceAt = (x, y) => {
-    for (const [id, data] of Object.entries(provincePaths)) {
-      const [cx, cy] = transformPoint(data.center);
-      const dx = x - cx;
-      const dy = y - cy;
-      const distSq = dx * dx + dy * dy;
-
-      // Miền Nam: vùng chọn nhỏ hơn một chút để giảm chồng lấn
-      const baseRadius = southernProvinces.has(id) ? 20 : 24;
-      if (distSq <= baseRadius * baseRadius) {
-        return id;
+    if (!geoData) return null;
+    
+    // Kiểm tra xem có hover vào quần đảo không
+    for (const island of vietnamIslands) {
+      const [ix, iy] = projectToCanvas(island.lon, island.lat);
+      const distance = Math.sqrt((x - ix) ** 2 + (y - iy) ** 2);
+      if (distance <= 8) {
+        return { type: 'island', data: island };
       }
     }
-
-    // Nếu click gần các đảo thì trả về tỉnh tương ứng
-    for (const island of seaIslands) {
-      const [ix, iy] = transformPoint(island.coord);
-      const dx = x - ix;
-      const dy = y - iy;
-      const distSq = dx * dx + dy * dy;
-      const radius = 10;
-      if (distSq <= radius * radius) {
-        return island.provinceId;
+    
+    for (const feature of geoData.features) {
+      if (pointInPolygon([x, y], feature.geometry.coordinates)) {
+        return feature.properties.VARNAME_1 || feature.properties.NAME_1;
       }
     }
-
     return null;
   };
-  
+
   // Tooltip element
   let tooltip = null;
   
-  const showProvinceTooltip = (x, y, provinceId) => {
-    const province = window.gameData?.provinces?.find(p => p.id === provinceId);
-    if (!province) return;
+  const showProvinceTooltip = (x, y, provinceName) => {
+    // Xử lý tooltip cho quần đảo
+    if (typeof provinceName === 'object' && provinceName.type === 'island') {
+      const island = provinceName.data;
+      
+      if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.className = 'fixed bg-gradient-to-br from-slate-800 to-slate-900 text-white px-4 py-3 rounded-lg shadow-2xl z-[100] pointer-events-none border-2 border-red-500/50 max-w-sm';
+        tooltip.style.display = 'none';
+        document.body.appendChild(tooltip);
+      }
+      
+      tooltip.innerHTML = `
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-2xl">${island.icon}</span>
+          <div class="font-bold text-red-400 text-lg">${island.name}</div>
+        </div>
+        <div class="text-sm text-slate-300 mb-2">${island.description}</div>
+        <div class="text-xs text-red-400 mt-2 border-t border-slate-600/50 pt-2 font-semibold">
+          🇻🇳 Chủ quyền thiêng liêng của Việt Nam
+        </div>
+      `;
+      
+      tooltip.style.left = `${x + 15}px`;
+      tooltip.style.top = `${y + 15}px`;
+      tooltip.style.display = 'block';
+      return;
+    }
+    
+    // Map từ GeoJSON name sang game data ID
+    const provinceId = provinceNameToId[provinceName];
+    
+    // Debug logging
+    if (!provinceId) {
+      console.warn(`⚠️ Không tìm thấy mapping cho tỉnh: ${provinceName}`);
+      console.log('Available mappings:', Object.keys(provinceNameToId));
+      return;
+    }
+    
+    const province = provinceId ? window.gameData?.provinces?.find(p => p.id === provinceId) : null;
+    
+    if (!province) {
+      console.warn(`⚠️ Không tìm thấy province data cho ID: ${provinceId} (từ ${provinceName})`);
+      return;
+    }
     
     const state = window.store?.getState?.() || {};
     const progress = state.provinceProgress?.[provinceId];
@@ -381,7 +660,6 @@ const createMapCanvas = () => {
     `;
     
     // Đặt vị trí tooltip
-    const rect = canvas.getBoundingClientRect();
     tooltip.style.left = `${x + 15}px`;
     tooltip.style.top = `${y + 15}px`;
     
@@ -404,7 +682,7 @@ const createMapCanvas = () => {
       tooltip.style.display = 'none';
     }
   };
-  
+
   // Event handlers
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
@@ -413,19 +691,25 @@ const createMapCanvas = () => {
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     
-    const provinceId = getProvinceAt(x, y);
-    if (provinceId !== hoveredProvince) {
-      hoveredProvince = provinceId;
+    const provinceName = getProvinceAt(x, y);
+    const prevHover = JSON.stringify(hoveredProvince);
+    const currHover = JSON.stringify(provinceName);
+    
+    if (prevHover !== currHover) {
+      hoveredProvince = provinceName;
       drawMap();
       
-      if (provinceId) {
-        showProvinceTooltip(e.clientX, e.clientY, provinceId);
+      if (provinceName) {
+        if (typeof provinceName === 'object' && provinceName.type === 'island') {
+          console.log('🏝️ Hover vào quần đảo:', provinceName.data.name);
+        } else {
+          console.log('🗺️ Hover vào tỉnh:', provinceName);
+        }
+        showProvinceTooltip(e.clientX, e.clientY, provinceName);
       } else {
         hideProvinceTooltip();
       }
-    } else if (provinceId && tooltip) {
-      // Cập nhật vị trí tooltip khi di chuyển chuột
-      const rect = canvas.getBoundingClientRect();
+    } else if (provinceName && tooltip) {
       tooltip.style.left = `${e.clientX + 15}px`;
       tooltip.style.top = `${e.clientY + 15}px`;
     }
@@ -438,14 +722,23 @@ const createMapCanvas = () => {
     const x = (e.clientX - rect.left) * scaleX;
     const y = (e.clientY - rect.top) * scaleY;
     
-    const provinceId = getProvinceAt(x, y);
-    if (provinceId) {
-      selectedProvince = provinceId;
+    const provinceName = getProvinceAt(x, y);
+    if (provinceName) {
+      // Nếu click vào quần đảo, chỉ hiển thị thông tin (không redirect)
+      if (typeof provinceName === 'object' && provinceName.type === 'island') {
+        console.log('🏝️ Click vào quần đảo:', provinceName.data.name);
+        return;
+      }
+      
+      selectedProvince = provinceName;
       drawMap();
       hideProvinceTooltip();
       
-      // Gọi hàm chọn tỉnh từ game
-      if (window.selectProvinceFromMap) {
+      // Map từ GeoJSON name sang game data ID
+      const provinceId = provinceNameToId[provinceName];
+      
+      // Gọi hàm chọn tỉnh từ game để redirect
+      if (provinceId && window.selectProvinceFromMap) {
         window.selectProvinceFromMap(provinceId);
       }
     }
@@ -457,8 +750,8 @@ const createMapCanvas = () => {
     hideProvinceTooltip();
   });
   
-  // Vẽ lần đầu
-  drawMap();
+  // Load data và vẽ bản đồ
+  loadGeoData();
   
   return canvas;
 };
@@ -467,3 +760,4 @@ const createMapCanvas = () => {
 if (typeof window !== 'undefined') {
   window.createMapCanvas = createMapCanvas;
 }
+
