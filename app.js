@@ -43,8 +43,7 @@ const saveToLocalStorage = (state) => {
       unlockedProvinces: state.unlockedProvinces,
       provinceProgress: state.provinceProgress,
       season: state.season,
-      currentMonth: state.currentMonth,
-      craftedItems: state.craftedItems || []
+      currentMonth: state.currentMonth
     }));
   } catch (e) {
     console.error('Failed to save:', e);
@@ -73,6 +72,7 @@ const store = createStore({
   season: saved?.season || 0, // 0 = Spring 2026, 19 = Spring 2030
   currentMonth: saved?.currentMonth || 0, // 0 = first month, 1 = second month, 2 = final month
   rulesSection: 'general',
+  knowledgeFilter: [], // Array of knowledge areas to filter by
   scholar: saved?.scholar || {
     name: "Học viên",
     level: 1,
@@ -89,7 +89,7 @@ const store = createStore({
   inventory: saved?.inventory || {},
   unlockedProvinces: unlockedProvinces,
   provinceProgress: saved?.provinceProgress || {},
-  craftedItems: saved?.craftedItems || [], // Track items that have been crafted
+  // Remove craftedItems tracking, use inventory count instead
   currentOpponent: null,
   debate: null,
   crafting: null,
@@ -270,13 +270,39 @@ const getRarityColor = (rarity) => {
 
 const getRarityBg = (rarity) => {
   const colors = {
-    common: 'bg-slate-500/20 border-slate-500/30',
-    uncommon: 'bg-emerald-500/20 border-emerald-500/30',
-    rare: 'bg-blue-500/20 border-blue-500/30',
-    epic: 'bg-purple-500/20 border-purple-500/30',
-    legendary: 'bg-amber-500/20 border-amber-500/30'
+    common: 'bg-slate-500/85 border-slate-500/30',
+    uncommon: 'bg-emerald-500/85 border-emerald-500/30',
+    rare: 'bg-blue-500/85 border-blue-500/30',
+    epic: 'bg-purple-500/85 border-purple-500/30',
+    legendary: 'bg-amber-500/95 border-amber-500/30'
   };
   return colors[rarity] || colors.common;
+};
+
+const getAreaName = (area) => {
+  const areaNames = {
+    history: "Lịch sử",
+    philosophy: "Triết học",
+    politics: "Chính trị",
+    economics: "Kinh tế",
+    culture: "Văn hóa",
+    society: "Xã hội",
+    tourism: "Du lịch",
+    geography: "Địa lý",
+    environment: "Môi trường",
+    agriculture: "Nông nghiệp",
+    energy: "Năng lượng",
+    technology: "Công nghệ",
+    labor: "Lao động",
+    development: "Phát triển",
+    military: "Quân sự",
+    arts: "Nghệ thuật",
+    education: "Giáo dục",
+    religion: "Tôn giáo",
+    ethics: "Đạo đức",
+    sports: "Thể thao"
+  };
+  return areaNames[area] || area;
 };
 
 // ==================== GAME LOGIC ====================
@@ -738,13 +764,13 @@ const opponentCounterArgument = () => {
 
 window.conced = () => {
   const customModal = document.createElement('div');
-  customModal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in';
+  customModal.className = 'fixed inset-0 bg-black/80 backdrop-blur-none flex items-center justify-center z-50 p-6 animate-fade-in';
   customModal.innerHTML = `
         <div class="bg-slate-800 rounded-2xl p-8 border border-amber-500/50 max-w-md">
           <h3 class="text-xl font-bold mb-4 text-center">🤔 Tạm ngừng tranh luận?</h3>
           <p class="text-slate-300 text-center mb-6">Bạn có chắc muốn tạm ngừng cuộc tranh luận này không?</p>
           <div class="flex gap-3">
-            <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition-all">
+            <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600/80 rounded-xl font-semibold transition-all">
               Tiếp tục tranh luận
             </button>
             <button onclick="this.closest('.fixed').remove(); confirmConcede()" class="flex-1 px-4 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl font-semibold transition-all">
@@ -1152,9 +1178,10 @@ window.craftItem = (itemId) => {
   const item = gameData.items[itemId];
   if (!item.recipe) return;
 
-  // Check if item has already been crafted
-  if (state.craftedItems.includes(itemId)) {
-    showToast('Vật phẩm này đã được chế tạo rồi!', 'error');
+  // Check if item has reached the crafting limit (5)
+  const currentCount = state.inventory[itemId] || 0;
+  if (currentCount >= 5) {
+    showToast('Vật phẩm này đã đạt giới hạn chế tạo (5 cái)!', 'error');
     return;
   }
 
@@ -1184,12 +1211,8 @@ window.craftItem = (itemId) => {
   });
 
   addToInventory(itemId, 1);
-  
-  // Mark item as crafted
-  const newCraftedItems = [...state.craftedItems, itemId];
-  store.setState({ craftedItems: newCraftedItems });
-  
-  showToast(`📝 Hoàn thành ${item.icon} ${item.name}!`, 'success');
+
+  showToast(`📝 Hoàn thành ${item.icon} ${item.name}! (${currentCount + 1}/5)`, 'success');
 };
 
 window.equipItem = (itemId) => {
@@ -1240,13 +1263,13 @@ window.unequipItem = (slot) => {
 
 window.resetGame = () => {
   const customModal = document.createElement('div');
-  customModal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in';
+  customModal.className = 'fixed inset-0 bg-black/80 backdrop-blur-none flex items-center justify-center z-50 p-6 animate-fade-in';
   customModal.innerHTML = `
         <div class="bg-slate-800 rounded-2xl p-8 border border-rose-500/50 max-w-md">
           <h3 class="text-xl font-bold mb-4 text-center">⚠️ Khởi động lại trò chơi?</h3>
           <p class="text-slate-300 text-center mb-6">Tất cả tiến trình, cấp độ, học liệu và thành tích sẽ bị xóa. Bạn có chắc chắn?</p>
           <div class="flex gap-3">
-            <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition-all">
+            <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600/80 rounded-xl font-semibold transition-all">
               Hủy
             </button>
             <button onclick="
@@ -1261,6 +1284,19 @@ window.resetGame = () => {
         </div>
       `;
   document.body.appendChild(customModal);
+};
+
+window.toggleKnowledgeFilter = (area) => {
+  const state = store.getState();
+  const currentFilter = state.knowledgeFilter || [];
+  const newFilter = currentFilter.includes(area)
+    ? currentFilter.filter(a => a !== area)
+    : [...currentFilter, area];
+  store.setState({ knowledgeFilter: newFilter });
+};
+
+window.clearKnowledgeFilter = () => {
+  store.setState({ knowledgeFilter: [] });
 };
 
 window.navigate = (page) => {
@@ -1282,10 +1318,10 @@ const renderHomePage = () => {
           <div class="max-w-6xl mx-auto">
             <div class="text-center mb-8 relative">
               <div class="absolute top-0 right-0 flex gap-2">
-                <button onclick="openRules()" class="px-4 py-2 bg-blue-600/50 hover:bg-blue-600 border border-blue-500/50 rounded-xl transition-all text-sm text-white">
+                <button onclick="openRules()" class="px-4 py-2 bg-blue-600/70 hover:bg-blue-600 border border-blue-500/50 rounded-xl transition-all text-sm text-white">
                   📖 Luật chơi
                 </button>
-                <button onclick="resetGame()" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+                <button onclick="resetGame()" class="px-4 py-2 bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
                   🔄 Khởi động lại
                 </button>
               </div>
@@ -1296,13 +1332,13 @@ const renderHomePage = () => {
                 Hồ Chí Minh
               </h1>
               <p class="text-slate-300 text-lg">Học tập - Tranh luận - Trưởng thành</p>
-              <div class="mt-4 inline-block px-6 py-2 bg-amber-500/20 border border-amber-500/50 rounded-xl">
-                <p class="text-lg font-bold text-amber-400">${getSeasonName(state.season)}</p>
-                <p class="text-xs text-slate-400">Mùa ${state.season + 1}/20</p>
+              <div class="mt-4 inline-block px-6 py-2 bg-amber-500/85 border border-amber-500/50 rounded-xl">
+                <p class="text-lg font-bold text-white-400">${getSeasonName(state.season)}</p>
+                <p class="text-xs text-white-400">Mùa ${state.season + 1}/20</p>
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/30 mb-6 shadow-xl">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-2xl p-6 border border-amber-500/30 mb-6 shadow-xl">
               <div class="flex items-center gap-4 mb-4">
                 <div class="w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-amber-600 flex items-center justify-center text-3xl animate-float">
                   🎓
@@ -1314,17 +1350,17 @@ const renderHomePage = () => {
                     <span>Tự tin: ${scholar.currentConfidence}/${scholar.maxConfidence}</span>
                   </div>
                 </div>
-                <button onclick="navigate('inventory')" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-xl transition-all">
+                <button onclick="navigate('inventory')" class="px-4 py-2 bg-amber-500/40 hover:bg-amber-500/30 border border-amber-500/50 rounded-xl transition-all">
                   📚 Học liệu
                 </button>
               </div>
 
               <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="text-center p-3 bg-slate-700/40 rounded-xl border border-slate-600/50">
+                <div class="text-center p-3 bg-slate-700/60 rounded-xl border border-slate-600/50">
                   <p class="text-2xl font-bold text-rose-400">${stats.persuasion}</p>
                   <p class="text-xs text-slate-400">Thuyết phục</p>
                 </div>
-                <div class="text-center p-3 bg-slate-700/40 rounded-xl border border-slate-600/50">
+                <div class="text-center p-3 bg-slate-700/60 rounded-xl border border-slate-600/50">
                   <p class="text-2xl font-bold text-blue-400">${stats.resilience}</p>
                   <p class="text-xs text-slate-400">Kiên định</p>
                 </div>
@@ -1335,7 +1371,7 @@ const renderHomePage = () => {
                   <span class="text-slate-300">Tự tin</span>
                   <span>${scholar.currentConfidence}/${scholar.maxConfidence}</span>
                 </div>
-                <div class="h-3 bg-slate-700/50 rounded-full overflow-hidden">
+                <div class="h-3 bg-slate-700/70 rounded-full overflow-hidden">
                   <div class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-green-600 rounded-full" style="width: ${(scholar.currentConfidence / scholar.maxConfidence) * 100}%"></div>
                 </div>
               </div>
@@ -1345,7 +1381,7 @@ const renderHomePage = () => {
                   <span class="text-slate-300">Kinh nghiệm</span>
                   <span>${expNeeded - scholar.exp} để lên cấp</span>
                 </div>
-                <div class="h-3 bg-slate-700/50 rounded-full overflow-hidden">
+                <div class="h-3 bg-slate-700/70 rounded-full overflow-hidden">
                   <div class="progress-bar h-full bg-gradient-to-r from-amber-500 to-orange-600 rounded-full" style="width: ${expProgress}%"></div>
                 </div>
               </div>
@@ -1354,7 +1390,7 @@ const renderHomePage = () => {
                 <div class="mt-4 pt-4 border-t border-slate-700/50">
                   <p class="text-sm text-slate-300 mb-2">Đang trang bị:</p>
                   <div class="flex gap-2 flex-wrap">
-                    ${scholar.argument ? `<span class="px-3 py-1 bg-rose-500/20 border border-rose-500/30 rounded-lg text-sm">${gameData.items[scholar.argument].icon} ${gameData.items[scholar.argument].name}</span>` : ''}
+                    ${scholar.argument ? `<span class="px-3 py-1 bg-rose-500/40 border border-rose-500/30 rounded-lg text-sm">${gameData.items[scholar.argument].icon} ${gameData.items[scholar.argument].name}</span>` : ''}
                     ${scholar.defense ? `<span class="px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-lg text-sm">${gameData.items[scholar.defense].icon} ${gameData.items[scholar.defense].name}</span>` : ''}
                   </div>
                 </div>
@@ -1363,14 +1399,14 @@ const renderHomePage = () => {
 
             <div class="flex gap-6 mb-6">
               <div class="tooltip flex-1">
-                <button onclick="openCrafting()" class="w-full p-6 bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/40 rounded-xl transition-all card-hover">
+                <button onclick="openCrafting()" class="w-full p-6 bg-gradient-to-r from-amber-600/60 to-orange-600/60 hover:from-amber-600/70 hover:to-orange-600/70 border border-amber-500/40 rounded-xl transition-all card-hover">
                   <span class="text-4xl block mb-3">📝</span>
                   <span class="font-bold text-lg">Soạn luận cứ</span>
                 </button>
                 <span class="tooltip-text">Chế tạo công cụ lập luận và vật phẩm hỗ trợ từ học liệu thu thập được</span>
               </div>
               <div class="tooltip flex-1">
-                <button onclick="navigate('inventory')" class="w-full p-6 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-xl transition-all card-hover">
+                <button onclick="navigate('inventory')" class="w-full p-6 bg-gradient-to-r from-blue-600/60 to-cyan-600/60 hover:from-blue-600/70 hover:to-cyan-600/70 border border-blue-500/40 rounded-xl transition-all card-hover">
                   <span class="text-4xl block mb-3">📚</span>
                   <span class="font-bold text-lg">Kho học liệu</span>
                 </button>
@@ -1382,7 +1418,17 @@ const renderHomePage = () => {
               <span>🗺️</span>
               <span>Bản đồ Việt Nam</span>
             </h3>
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 mb-6 shadow-xl">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-amber-500/30 mb-6 shadow-xl">
+              <div class="mb-4">
+                <p class="text-sm text-slate-400 mb-3 text-center">Lọc theo lĩnh vực học liệu:</p>
+                <div class="flex flex-wrap justify-center gap-2 mb-3">
+                  ${['history', 'philosophy', 'politics', 'economics', 'culture', 'society', 'tourism', 'geography', 'environment', 'agriculture', 'energy', 'technology', 'labor', 'development', 'military', 'arts', 'education', 'religion', 'ethics', 'sports'].map(area => {
+                    const isSelected = state.knowledgeFilter.includes(area);
+                    return `<button onclick="toggleKnowledgeFilter('${area}')" class="px-3 py-1 rounded-lg text-xs transition-all ${isSelected ? 'bg-amber-500/30 border border-amber-500/50 text-amber-200' : 'bg-slate-700/70 border border-slate-600/50 text-slate-300 hover:text-white hover:bg-slate-600/80'}">${getAreaName(area)}</button>`;
+                  }).join('')}
+                </div>
+                ${state.knowledgeFilter.length > 0 ? `<div class="text-center"><button onclick="clearKnowledgeFilter()" class="px-4 py-2 bg-slate-700/70 hover:bg-slate-600/80 border border-slate-600/50 rounded-lg text-sm transition-all">Xóa bộ lọc</button></div>` : ''}
+              </div>
               <p class="text-sm text-slate-400 mb-4 text-center">Di chuột để xem thông tin tỉnh • Click để chọn tỉnh</p>
               <div id="map-container" class="flex justify-center overflow-x-auto">
                 <!-- Canvas sẽ được thêm vào đây -->
@@ -1397,7 +1443,7 @@ const renderHomePage = () => {
               ${gameData.provinces.map((prov, i) => {
                 const progress = state.provinceProgress[prov.id];
                 return `
-                  <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-5 border border-amber-500/40 card-hover shadow-lg" style="animation-delay: ${i * 0.1}s">
+                  <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-5 border border-amber-500/40 card-hover shadow-lg" style="animation-delay: ${i * 0.1}s">
                     <div class="flex items-start justify-between mb-3">
                       <span class="text-4xl">${prov.icon}</span>
                     </div>
@@ -1502,7 +1548,7 @@ const renderStudyingPage = () => {
   return `
         <div class="min-h-full p-6">
           <div class="max-w-4xl mx-auto">
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/40 mb-6 shadow-xl">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-2xl p-6 border border-amber-500/40 mb-6 shadow-xl">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-4">
                   <span class="text-5xl">${province.icon}</span>
@@ -1522,14 +1568,14 @@ const renderStudyingPage = () => {
                   <button onclick="openRulesSection('debate')" class="px-3 py-2 bg-rose-600/30 hover:bg-rose-600 border border-rose-500/40 rounded-xl transition-all text-sm text-white">
                     📖 Luật (Tranh luận)
                   </button>
-                  <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all">
+                  <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all">
                     ← Quay lại
                   </button>
                 </div>
               </div>
               
               <div class="text-center mb-4">
-                <div class="inline-flex gap-2 bg-slate-700/50 rounded-xl p-2">
+                <div class="inline-flex gap-2 bg-slate-700/70 rounded-xl p-2">
                   ${monthNames.map((name, idx) => `
                     <div class="px-4 py-2 rounded-lg ${idx === state.currentMonth ? 'bg-amber-500/30 border border-amber-500/50 text-amber-300 font-semibold' : 'text-slate-400'}">
                       ${name}
@@ -1539,15 +1585,15 @@ const renderStudyingPage = () => {
               </div>
 
               <div class="grid grid-cols-3 gap-3 text-center text-sm">
-                <div class="p-2 bg-slate-700/40 rounded-lg border border-slate-600/50">
+                <div class="p-2 bg-slate-700/60 rounded-lg border border-slate-600/50">
                   <p class="text-xl font-bold text-blue-400">${progress.knowledgeGained}</p>
                   <p class="text-slate-300 text-xs">Học liệu</p>
                 </div>
-                <div class="p-2 bg-slate-700/40 rounded-lg border border-slate-600/50">
+                <div class="p-2 bg-slate-700/60 rounded-lg border border-slate-600/50">
                   <p class="text-xl font-bold text-rose-400">${progress.debatesWon}</p>
                   <p class="text-slate-300 text-xs">Tranh luận</p>
                 </div>
-                <div class="p-2 bg-slate-700/40 rounded-lg border border-slate-600/50">
+                <div class="p-2 bg-slate-700/60 rounded-lg border border-slate-600/50">
                   <p class="text-xl font-bold text-emerald-400">${progress.quizzesPassed}</p>
                   <p class="text-slate-300 text-xs">Câu hỏi</p>
                 </div>
@@ -1558,7 +1604,7 @@ const renderStudyingPage = () => {
               <button
                 onclick="learnKnowledge()"
                 ${!studying.canLearn ? 'disabled' : ''}
-                class="p-8 bg-gradient-to-br from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-2xl transition-all shadow-lg ${studying.canLearn ? 'card-hover' : 'opacity-50 cursor-not-allowed'}"
+                class="p-8 bg-gradient-to-br from-blue-600/60 to-cyan-600/60 hover:from-blue-600/70 hover:to-cyan-600/70 border border-blue-500/40 rounded-2xl transition-all shadow-lg ${studying.canLearn ? 'card-hover' : 'opacity-80 cursor-not-allowed'}"
               >
                 <span class="text-6xl block mb-3">📖</span>
                 <h3 class="font-bold text-xl mb-2">Thu thập học liệu</h3>
@@ -1568,7 +1614,7 @@ const renderStudyingPage = () => {
 
               <button
                 onclick="startDebate()"
-                class="p-8 bg-gradient-to-br from-rose-600/20 to-red-600/20 hover:from-rose-600/30 hover:to-red-600/30 border border-rose-500/40 rounded-2xl transition-all shadow-lg card-hover"
+                class="p-8 bg-gradient-to-br from-rose-600/60 to-red-600/60 hover:from-rose-600/70 hover:to-red-600/70 border border-rose-500/40 rounded-2xl transition-all shadow-lg card-hover"
               >
                 <span class="text-6xl block mb-3">🗣️</span>
                 <h3 class="font-bold text-xl mb-2">Tranh luận</h3>
@@ -1576,7 +1622,7 @@ const renderStudyingPage = () => {
               </button>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-amber-500/30 mb-6 shadow-lg">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-4 border border-amber-500/30 mb-6 shadow-lg">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-slate-300">Tự tin hiện tại</p>
@@ -1586,13 +1632,13 @@ const renderStudyingPage = () => {
                   <p class="text-sm text-slate-300">Thuyết phục / Kiên định</p>
                   <p class="font-bold">${getScholarStats().persuasion} / ${getScholarStats().resilience}</p>
                 </div>
-                <button onclick="exitProvince()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition-all">
+                <button onclick="exitProvince()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600/80 rounded-xl font-semibold transition-all">
                   🚪 Kết thúc
                 </button>
               </div>
             </div>
             
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-emerald-500/30 shadow-lg mb-6">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-4 border border-emerald-500/30 shadow-lg mb-6">
               <div class="flex items-center justify-between">
                 <div>
                   <p class="text-sm text-slate-300">Mùa hiện tại: <span class="font-bold text-emerald-400">${seasonName}</span></p>
@@ -1604,7 +1650,7 @@ const renderStudyingPage = () => {
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 shadow-lg">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-4 border border-blue-500/30 shadow-lg">
               <h4 class="font-bold mb-3 flex items-center gap-2">
                 <span>ℹ️</span>
                 <span>Điểm độc đáo của ${province.name}</span>
@@ -1620,7 +1666,7 @@ const renderStudyingPage = () => {
                         console.warn('Book not found:', bookKey);
                         return '';
                       }
-                      return `<span class="px-2 py-1 bg-slate-700/50 border border-slate-600 rounded">${book.icon} ${book.name}</span>`;
+                      return `<span class="px-2 py-1 bg-slate-700/70 border border-slate-600 rounded">${book.icon} ${book.name}</span>`;
                     }).filter(Boolean).join('')}
                   </div>
                 </div>
@@ -1639,10 +1685,10 @@ const renderStudyingPage = () => {
                                          item.rarity === 'rare' ? 'text-blue-400' : 'text-green-400';
                       return `
                         <div class="group relative">
-                          <span class="px-2 py-1 bg-amber-500/20 border border-amber-500/40 rounded text-xs cursor-help hover:bg-amber-500/30 transition-colors">
+                          <span class="px-2 py-1 bg-amber-500/40 border border-amber-500/40 rounded text-xs cursor-help hover:bg-amber-500/30 transition-colors">
                             ${item.icon} ${item.name}
                           </span>
-                          <div class="absolute left-0 top-full mt-1 w-64 p-3 bg-slate-800 border border-amber-500/40 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                          <div class="absolute left-0 top-full mt-1 w-64 p-3 bg-slate-800 border border-amber-500/40 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                             <div class="flex items-start justify-between mb-2">
                               <span class="text-lg">${item.icon}</span>
                               <span class="text-xs ${rarityColor} font-bold">${item.rarity ? item.rarity.toUpperCase() : ''}</span>
@@ -1676,11 +1722,11 @@ const renderDebatePage = () => {
           <div class="max-w-7xl w-full mx-auto grid lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2">
               <div class="flex items-center justify-between mb-4">
-                <button onclick="conced()" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+                <button onclick="conced()" class="px-4 py-2 bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
                   ← Rút lui khỏi tranh luận
                 </button>
               </div>
-              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-2xl p-8 border border-amber-500/40 mb-6 shadow-xl">
                 <div class="text-center mb-6">
                   <h3 class="text-xl font-bold text-amber-400 mb-2">Đề tài tranh luận</h3>
                   <p class="text-lg font-serif italic text-slate-200">"${currentOpponent.topic}"</p>
@@ -1695,7 +1741,7 @@ const renderDebatePage = () => {
                         <span>Tự tin</span>
                         <span>${scholar.currentConfidence}/${scholar.maxConfidence}</span>
                       </div>
-                      <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
+                      <div class="h-4 bg-slate-700/70 rounded-full overflow-hidden">
                         <div class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-green-600 rounded-full" style="width: ${(scholar.currentConfidence / scholar.maxConfidence) * 100}%"></div>
                       </div>
                     </div>
@@ -1713,7 +1759,7 @@ const renderDebatePage = () => {
                         <span>Tự tin</span>
                         <span>${currentOpponent.currentConfidence}/${currentOpponent.maxConfidence}</span>
                       </div>
-                      <div class="h-4 bg-slate-700/50 rounded-full overflow-hidden">
+                      <div class="h-4 bg-slate-700/70 rounded-full overflow-hidden">
                         <div class="progress-bar h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" style="width: ${(currentOpponent.currentConfidence / currentOpponent.maxConfidence) * 100}%"></div>
                       </div>
                     </div>
@@ -1724,7 +1770,7 @@ const renderDebatePage = () => {
                   </div>
                 </div>
 
-                <div class="bg-slate-700/40 rounded-xl p-4 mb-6 max-h-[150px] overflow-y-auto border border-slate-600/50">
+                <div class="bg-slate-700/60 rounded-xl p-4 mb-6 max-h-[150px] overflow-y-auto border border-slate-600/50">
                   ${debate.log.map(msg => `<p class="text-sm mb-1 text-slate-200">${msg}</p>`).join('')}
                 </div>
 
@@ -1733,20 +1779,20 @@ const renderDebatePage = () => {
                     <button onclick="presentArgument()" class="py-4 px-6 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all animate-glow shadow-lg">
                       💡 Đưa ra lập luận
                     </button>
-                    <button onclick="toggleAutoArgument()" class="py-4 px-6 ${state.autoArgument ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-600'} rounded-xl font-bold text-lg transition-all">
+                    <button onclick="toggleAutoArgument()" class="py-4 px-6 ${state.autoArgument ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-600/80'} rounded-xl font-bold text-lg transition-all">
                       🔁 Tự động (${state.autoArgument ? 'ON' : 'OFF'})
                     </button>
                   </div>
                 ` : ''}
 
                 <div class="flex justify-center">
-                  <button onclick="conced()" class="py-3 px-6 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-300 hover:text-white">
+                  <button onclick="conced()" class="py-3 px-6 bg-slate-700/70 hover:bg-slate-600/80/50 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-300 hover:text-white">
                     🚪 Rút lui khỏi tranh luận
                   </button>
                 </div>
               </div>
 
-              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30 shadow-lg">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-4 border border-blue-500/30 shadow-lg">
                 <h4 class="font-bold mb-3">☕ Vật phẩm hỗ trợ</h4>
                 <div class="flex gap-2 flex-wrap">
                   ${Object.entries(state.inventory).filter(([id]) => {
@@ -1762,7 +1808,7 @@ const renderDebatePage = () => {
                           <span class="text-2xl">${item.icon}</span>
                           <span class="ml-2 text-sm">×${count}</span>
                         </button>
-                        <div class="absolute left-0 top-full mt-1 w-64 p-3 bg-slate-800 border border-blue-500/40 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <div class="absolute left-0 top-full mt-1 w-64 p-3 bg-slate-800 border border-blue-500/40 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                           <div class="flex items-start justify-between mb-2">
                             <span class="text-lg">${item.icon}</span>
                             <span class="text-xs ${rarityColor} font-bold">${item.rarity ? item.rarity.toUpperCase() : ''}</span>
@@ -1782,7 +1828,7 @@ const renderDebatePage = () => {
             </div>
 
             <div class="lg:col-span-1">
-              <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-4 border border-red-500/30 shadow-lg sticky top-6">
+              <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-4 border border-red-500/30 shadow-lg sticky top-6">
                 <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
                   <span>🗣️</span>
                   <span>Luật Tranh luận</span>
@@ -1836,15 +1882,15 @@ const renderInventoryPage = () => {
                 <span>📚</span>
                 <span>Kho học liệu</span>
               </h2>
-              <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl transition-all">
+              <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600/80 rounded-xl transition-all">
                 ← Quay lại
               </button>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/40 mb-6 shadow-xl">
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-amber-500/40 mb-6 shadow-xl">
               <h3 class="font-bold mb-4">⚡ Đang trang bị</h3>
               <div class="grid md:grid-cols-3 gap-4">
-                <div class="p-4 bg-slate-700/40 rounded-xl border border-slate-600/50">
+                <div class="p-4 bg-slate-700/60 rounded-xl border border-slate-600/50">
                   <p class="text-sm text-slate-300 mb-2">💡 Lập luận</p>
                   ${scholar.argument ? `
                     <div class="flex items-center justify-between">
@@ -1862,7 +1908,7 @@ const renderInventoryPage = () => {
                   ` : '<p class="text-slate-500 text-sm">Chưa trang bị</p>'}
                 </div>
 
-                <div class="p-4 bg-slate-700/40 rounded-xl border border-slate-600/50">
+                <div class="p-4 bg-slate-700/60 rounded-xl border border-slate-600/50">
                   <p class="text-sm text-slate-300 mb-2">🛡️ Phòng thủ</p>
                   ${scholar.defense ? `
                     <div class="flex items-center justify-between">
@@ -1880,7 +1926,7 @@ const renderInventoryPage = () => {
                   ` : '<p class="text-slate-500 text-sm">Chưa trang bị</p>'}
                 </div>
 
-                <div class="p-4 bg-slate-700/40 rounded-xl border border-slate-600/50">
+                <div class="p-4 bg-slate-700/60 rounded-xl border border-slate-600/50">
                   <p class="text-sm text-slate-300 mb-2">🏛️ Di tích</p>
                   ${scholar.landmark ? `
                     <div class="flex items-center justify-between">
@@ -1920,7 +1966,7 @@ const renderInventoryPage = () => {
                         <p class="font-bold text-sm mb-1">${item.name}</p>
                         <p class="text-xs text-slate-300 mb-2">${item.description}</p>
                         <p class="text-sm text-rose-400 mb-2">+${item.persuasion} Thuyết phục</p>
-                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
+                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/40 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
                           Trang bị
                         </button>
                       </div>
@@ -1948,7 +1994,7 @@ const renderInventoryPage = () => {
                         <p class="font-bold text-sm mb-1">${item.name}</p>
                         <p class="text-xs text-slate-300 mb-2">${item.description}</p>
                         <p class="text-sm text-blue-400 mb-2">+${item.resilience} Kiên định</p>
-                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
+                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/40 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
                           Trang bị
                         </button>
                       </div>
@@ -1971,7 +2017,7 @@ const renderInventoryPage = () => {
                       <div class="p-4 ${getRarityBg(item.rarity)} border rounded-xl card-hover shadow-lg">
                         <div class="flex items-start justify-between mb-2">
                           <span class="text-3xl">${item.icon}</span>
-                          <span class="px-2 py-1 bg-slate-700/50 rounded text-xs">×${count}</span>
+                          <span class="px-2 py-1 bg-slate-700/70 rounded text-xs">×${count}</span>
                         </div>
                         <p class="font-bold text-sm mb-1">${item.name}</p>
                         <p class="text-xs text-slate-300 mb-2">${item.description}</p>
@@ -1995,10 +2041,19 @@ const renderInventoryPage = () => {
                   ${knowledge.map(([id, count]) => {
                     const item = gameData.items[id];
                     return `
-                      <div class="p-3 ${getRarityBg(item.rarity)} border rounded-xl text-center card-hover shadow-lg">
+                      <div class="group relative p-3 ${getRarityBg(item.rarity)} border rounded-xl text-center card-hover shadow-lg cursor-help">
                         <span class="text-3xl block mb-1">${item.icon}</span>
                         <p class="text-xs font-bold mb-1">${item.name}</p>
                         <p class="text-xs text-slate-300">×${count}</p>
+                        <div class="absolute left-1/2 top-full mt-1 -translate-x-1/2 w-48 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 text-left">
+                          <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg">${item.icon}</span>
+                            <span class="text-xs ${getRarityColor(item.rarity)} font-bold">${item.rarity ? item.rarity.toUpperCase() : ''}</span>
+                          </div>
+                          <h4 class="font-bold text-sm mb-1">${item.name}</h4>
+                          <p class="text-xs text-slate-300 mb-2">Lĩnh vực: ${getAreaName(item.area)}</p>
+                          <p class="text-xs text-slate-400">Số lượng: ${count}</p>
+                        </div>
                       </div>
                     `;
                   }).join('')}
@@ -2026,7 +2081,7 @@ const renderInventoryPage = () => {
                         ${item.wisdom ? `<p class="text-sm text-purple-400 mb-1">+${item.wisdom} Trí tuệ</p>` : ''}
                         ${item.credibility ? `<p class="text-sm text-cyan-400 mb-1">+${item.credibility} Uy tín</p>` : ''}
                         ${item.patriotism ? `<p class="text-sm text-red-400 mb-2">+${item.patriotism} Lòng yêu nước</p>` : ''}
-                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
+                        <button onclick="equipItem('${id}')" class="w-full py-1 px-3 bg-amber-500/40 hover:bg-amber-500/30 border border-amber-500/50 rounded-lg text-xs transition-all">
                           Trang bị
                         </button>
                       </div>
@@ -2057,7 +2112,7 @@ const renderCraftingPage = () => {
                 <span>📝</span>
                 <span>Soạn luận cứ</span>
               </h2>
-              <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl transition-all">
+              <button onclick="navigate('home')" class="px-4 py-2 bg-slate-700 hover:bg-slate-600/80 rounded-xl transition-all">
                 ← Quay lại
               </button>
             </div>
@@ -2070,20 +2125,20 @@ const renderCraftingPage = () => {
                 </h3>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   ${argumentTools.map(([id, item]) => {
-                    const isCrafted = state.craftedItems.includes(id);
-                    const canCraft = !isCrafted && hasItems(item.recipe);
+                    const currentCount = state.inventory[id] || 0;
+                    const canCraft = currentCount < 5 && hasItems(item.recipe);
                     return `
-                      <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-5 border ${isCrafted ? 'border-purple-500/40' : canCraft ? 'border-emerald-500/40' : 'border-slate-700/50'} ${canCraft ? 'card-hover' : 'opacity-60'} shadow-lg">
+                      <div class="bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-5 border ${currentCount >= 5 ? 'border-purple-500/40' : canCraft ? 'border-emerald-500/40' : 'border-slate-700/50'} ${canCraft ? 'card-hover' : 'opacity-85'} shadow-lg">
                         <div class="flex items-start justify-between mb-3">
                           <span class="text-4xl">${item.icon}</span>
-                          <span class="text-xs ${getRarityColor(item.rarity)} px-2 py-1 bg-slate-700/50 rounded">${item.rarity}</span>
+                          <span class="text-xs ${getRarityColor(item.rarity)} px-2 py-1 bg-slate-700/70 rounded">${item.rarity}</span>
                         </div>
                         <div class="mb-2">
                           <span class="text-xs px-2 py-1 bg-blue-500/20 border border-blue-500/40 rounded text-blue-300">[Argument Tool]</span>
                         </div>
                         <h3 class="font-bold mb-1">${item.name}</h3>
                         <p class="text-sm text-slate-300 mb-3">${item.description}</p>
-                        ${isCrafted ? `<p class="text-xs text-purple-400 mb-2 font-semibold">✓ Đã chế tạo</p>` : ''}
+                        ${currentCount >= 5 ? `<p class="text-xs text-purple-400 mb-2 font-semibold">✓ Đã chế tạo tối đa (5/5)</p>` : `<p class="text-xs text-slate-400 mb-2">Đã chế tạo: ${currentCount}/5</p>`}
 
                         ${item.persuasion ? `<p class="text-sm text-rose-400 mb-1">💡 +${item.persuasion} Thuyết phục</p>` : ''}
                         ${item.resilience ? `<p class="text-sm text-blue-400 mb-1">🛡️ +${item.resilience} Kiên định</p>` : ''}
@@ -2105,11 +2160,38 @@ const renderCraftingPage = () => {
                               const has = state.inventory[recipeId] || 0;
                               const enough = has >= amount;
                               const recipeItem = gameData.items[recipeId];
-                              return `
-                                <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs">
-                                  ${recipeItem ? recipeItem.icon : '📄'} ${has}/${amount}
-                                </span>
-                              `;
+                              if (recipeItem) {
+                                return `
+                                  <div class="group relative inline-block">
+                                    <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs cursor-help">
+                                      ${recipeItem.icon} ${has}/${amount}
+                                    </span>
+                                    <div class="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 w-64 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-[999999] text-left">
+                                      <div class="flex items-start justify-between mb-2">
+                                        <span class="text-lg">${recipeItem.icon}</span>
+                                        <span class="text-xs ${getRarityColor(recipeItem.rarity)} font-bold">${recipeItem.rarity ? recipeItem.rarity.toUpperCase() : ''}</span>
+                                      </div>
+                                      <h4 class="font-bold text-sm mb-1">${recipeItem.name}</h4>
+                                      <p class="text-xs text-slate-300 mb-2">${recipeItem.description || ''}</p>
+                                      ${recipeItem.type === 'knowledge' ? `<p class="text-xs text-slate-400">Lĩnh vực: ${getAreaName(recipeItem.area)}</p>` : ''}
+                                      ${recipeItem.persuasion ? `<p class="text-xs text-rose-400 mb-1">💡 Thuyết phục: +${recipeItem.persuasion}</p>` : ''}
+                                      ${recipeItem.resilience ? `<p class="text-xs text-blue-400 mb-1">🛡️ Kiên định: +${recipeItem.resilience}</p>` : ''}
+                                      ${recipeItem.focusBoost ? `<p class="text-xs text-emerald-400 mb-1">☕ +${recipeItem.focusBoost} Tự tin</p>` : ''}
+                                      ${recipeItem.clarityBoost ? `<p class="text-xs text-cyan-400 mb-1">💧 +${recipeItem.clarityBoost} Minh mẫn</p>` : ''}
+                                      ${recipeItem.persuasionBoost ? `<p class="text-xs text-amber-400 mb-1">✨ +${recipeItem.persuasionBoost} Thuyết phục (${recipeItem.duration} trận)</p>` : ''}
+                                      ${recipeItem.resilienceBoost ? `<p class="text-xs text-cyan-400 mb-1">💪 +${recipeItem.resilienceBoost} Kiên định (${recipeItem.duration} trận)</p>` : ''}
+                                      <p class="text-xs text-slate-400 mt-2">Loại: ${recipeItem.type === 'knowledge' ? 'Học liệu' : recipeItem.type === 'argument' ? 'Công cụ lập luận' : recipeItem.type === 'defense' ? 'Công cụ phòng thủ' : recipeItem.type === 'consumable' ? 'Vật phẩm hỗ trợ' : recipeItem.type}</p>
+                                      <p class="text-xs text-slate-400">Số lượng: ${has}/${amount}</p>
+                                    </div>
+                                  </div>
+                                `;
+                              } else {
+                                return `
+                                  <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs">
+                                    📄 ${has}/${amount}
+                                  </span>
+                                `;
+                              }
                             }).join('')}
                           </div>
                         </div>
@@ -2117,10 +2199,12 @@ const renderCraftingPage = () => {
                         <button
                           onclick="craftItem('${id}')"
                           ${!canCraft ? 'disabled' : ''}
-                          class="w-full py-2 px-4 ${isCrafted ? 'bg-purple-600/50 cursor-not-allowed' : canCraft ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700' : 'bg-slate-700/50 cursor-not-allowed'} rounded-lg font-semibold transition-all text-sm shadow-lg"
+                          class="w-full py-2 px-4 ${currentCount >= 5 ? 'bg-purple-600/50 cursor-not-allowed' : canCraft ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700' : 'bg-slate-700/70 cursor-not-allowed'} rounded-lg font-semibold transition-all text-sm shadow-lg"
                         >
-                          ${isCrafted ? '✓ Đã chế tạo' : canCraft ? '📝 Soạn thảo' : '❌ Thiếu tài liệu'}
+                          ${currentCount >= 5 ? '✓ Đã chế tạo tối đa' : canCraft ? '📝 Soạn thảo' : '❌ Thiếu tài liệu'}
                         </button>
+
+
                       </div>
                     `;
                   }).join('')}
@@ -2136,20 +2220,20 @@ const renderCraftingPage = () => {
                 </h3>
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   ${consumables.map(([id, item]) => {
-                    const isCrafted = state.craftedItems.includes(id);
-                    const canCraft = !isCrafted && hasItems(item.recipe);
+                    const currentCount = state.inventory[id] || 0;
+                    const canCraft = currentCount < 5 && hasItems(item.recipe);
                     return `
-                      <div class="bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-5 border ${isCrafted ? 'border-purple-500/40' : canCraft ? 'border-emerald-500/40' : 'border-slate-700/50'} ${canCraft ? 'card-hover' : 'opacity-60'} shadow-lg">
+                      <div class="group relative bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-5 border ${currentCount >= 5 ? 'border-purple-500/40' : canCraft ? 'border-emerald-500/40' : 'border-slate-700/50'} ${canCraft ? 'card-hover' : 'opacity-100'} shadow-lg cursor-help">
                         <div class="flex items-start justify-between mb-3">
                           <span class="text-4xl">${item.icon}</span>
-                          <span class="text-xs ${getRarityColor(item.rarity)} px-2 py-1 bg-slate-700/50 rounded">${item.rarity}</span>
+                          <span class="text-xs ${getRarityColor(item.rarity)} px-2 py-1 bg-slate-700/70 rounded">${item.rarity}</span>
                         </div>
                         <div class="mb-2">
                           <span class="text-xs px-2 py-1 bg-purple-500/20 border border-purple-500/40 rounded text-purple-300">[Consumables]</span>
                         </div>
                         <h3 class="font-bold mb-1">${item.name}</h3>
                         <p class="text-sm text-slate-300 mb-3">${item.description}</p>
-                        ${isCrafted ? `<p class="text-xs text-purple-400 mb-2 font-semibold">✓ Đã chế tạo</p>` : ''}
+                        ${currentCount >= 5 ? `<p class="text-xs text-purple-400 mb-2 font-semibold">✓ Đã chế tạo tối đa (5/5)</p>` : `<p class="text-xs text-slate-400 mb-2">Đã chế tạo: ${currentCount}/5</p>`}
 
                         ${item.focusBoost ? `<p class="text-sm text-emerald-400 mb-1">☕ +${item.focusBoost} Tự tin</p>` : ''}
                         ${item.clarityBoost ? `<p class="text-sm text-cyan-400 mb-1">💧 +${item.clarityBoost} Minh mẫn</p>` : ''}
@@ -2173,11 +2257,38 @@ const renderCraftingPage = () => {
                               const has = state.inventory[recipeId] || 0;
                               const enough = has >= amount;
                               const recipeItem = gameData.items[recipeId];
-                              return `
-                                <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs">
-                                  ${recipeItem ? recipeItem.icon : '📄'} ${has}/${amount}
-                                </span>
-                              `;
+                              if (recipeItem) {
+                                return `
+                                  <div class="group relative inline-block">
+                                    <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs cursor-help">
+                                      ${recipeItem.icon} ${has}/${amount}
+                                    </span>
+                                    <div class="absolute left-1/2 bottom-full mb-1 -translate-x-1/2 w-64 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-[999999] text-left">
+                                      <div class="flex items-start justify-between mb-2">
+                                        <span class="text-lg">${recipeItem.icon}</span>
+                                        <span class="text-xs ${getRarityColor(recipeItem.rarity)} font-bold">${recipeItem.rarity ? recipeItem.rarity.toUpperCase() : ''}</span>
+                                      </div>
+                                      <h4 class="font-bold text-sm mb-1">${recipeItem.name}</h4>
+                                      <p class="text-xs text-slate-300 mb-2">${recipeItem.description || ''}</p>
+                                      ${recipeItem.type === 'knowledge' ? `<p class="text-xs text-slate-400">Lĩnh vực: ${getAreaName(recipeItem.area)}</p>` : ''}
+                                      ${recipeItem.persuasion ? `<p class="text-xs text-rose-400 mb-1">💡 Thuyết phục: +${recipeItem.persuasion}</p>` : ''}
+                                      ${recipeItem.resilience ? `<p class="text-xs text-blue-400 mb-1">🛡️ Kiên định: +${recipeItem.resilience}</p>` : ''}
+                                      ${recipeItem.focusBoost ? `<p class="text-xs text-emerald-400 mb-1">☕ +${recipeItem.focusBoost} Tự tin</p>` : ''}
+                                      ${recipeItem.clarityBoost ? `<p class="text-xs text-cyan-400 mb-1">💧 +${recipeItem.clarityBoost} Minh mẫn</p>` : ''}
+                                      ${recipeItem.persuasionBoost ? `<p class="text-xs text-amber-400 mb-1">✨ +${recipeItem.persuasionBoost} Thuyết phục (${recipeItem.duration} trận)</p>` : ''}
+                                      ${recipeItem.resilienceBoost ? `<p class="text-xs text-cyan-400 mb-1">💪 +${recipeItem.resilienceBoost} Kiên định (${recipeItem.duration} trận)</p>` : ''}
+                                      <p class="text-xs text-slate-400 mt-2">Loại: ${recipeItem.type === 'knowledge' ? 'Học liệu' : recipeItem.type === 'argument' ? 'Công cụ lập luận' : recipeItem.type === 'defense' ? 'Công cụ phòng thủ' : recipeItem.type === 'consumable' ? 'Vật phẩm hỗ trợ' : recipeItem.type}</p>
+                                      <p class="text-xs text-slate-400">Số lượng: ${has}/${amount}</p>
+                                    </div>
+                                  </div>
+                                `;
+                              } else {
+                                return `
+                                  <span class="px-2 py-1 ${enough ? 'bg-emerald-500/20 border-emerald-500/30' : 'bg-red-500/20 border-red-500/30'} border rounded text-xs">
+                                    📄 ${has}/${amount}
+                                  </span>
+                                `;
+                              }
                             }).join('')}
                           </div>
                         </div>
@@ -2185,10 +2296,24 @@ const renderCraftingPage = () => {
                         <button
                           onclick="craftItem('${id}')"
                           ${!canCraft ? 'disabled' : ''}
-                          class="w-full py-2 px-4 ${isCrafted ? 'bg-purple-600/50 cursor-not-allowed' : canCraft ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700' : 'bg-slate-700/50 cursor-not-allowed'} rounded-lg font-semibold transition-all text-sm shadow-lg"
+                          class="w-full py-2 px-4 ${currentCount >= 5 ? 'bg-purple-600/50 cursor-not-allowed' : canCraft ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700' : 'bg-slate-700/70 cursor-not-allowed'} rounded-lg font-semibold transition-all text-sm shadow-lg"
                         >
-                          ${isCrafted ? '✓ Đã chế tạo' : canCraft ? '📝 Soạn thảo' : '❌ Thiếu tài liệu'}
+                          ${currentCount >= 5 ? '✓ Đã chế tạo tối đa' : canCraft ? '📝 Soạn thảo' : '❌ Thiếu tài liệu'}
                         </button>
+
+                        <div class="absolute left-1/2 top-full mt-2 -translate-x-1/2 w-64 p-3 bg-slate-800 border border-purple-500/40 rounded-lg shadow-xl opacity-80 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 text-left">
+                          <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg">${item.icon}</span>
+                            <span class="text-xs ${getRarityColor(item.rarity)} font-bold">${item.rarity ? item.rarity.toUpperCase() : ''}</span>
+                          </div>
+                          <h4 class="font-bold text-sm mb-1">${item.name}</h4>
+                          <p class="text-xs text-slate-300 mb-2">${item.description}</p>
+                          ${item.focusBoost ? `<p class="text-xs text-emerald-400 mb-1">☕ Tự tin: +${item.focusBoost}</p>` : ''}
+                          ${item.clarityBoost ? `<p class="text-xs text-cyan-400 mb-1">💧 Minh mẫn: +${item.clarityBoost}</p>` : ''}
+                          ${item.persuasionBoost ? `<p class="text-xs text-amber-400 mb-1">✨ Thuyết phục: +${item.persuasionBoost} (${item.duration} trận)</p>` : ''}
+                          ${item.resilienceBoost ? `<p class="text-xs text-cyan-400 mb-1">💪 Kiên định: +${item.resilienceBoost} (${item.duration} trận)</p>` : ''}
+                          <p class="text-xs text-slate-400 mt-2">Loại: Vật phẩm hỗ trợ</p>
+                        </div>
                       </div>
                     `;
                   }).join('')}
@@ -2207,7 +2332,7 @@ const renderQuizModal = () => {
   const { quiz } = state;
 
   return `
-        <div class="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+        <div class="fixed inset-0 bg-black/90 backdrop-blur-none flex items-center justify-center z-50 p-6">
           <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border border-amber-500/50 max-w-2xl w-full shadow-2xl">
             <div class="text-center mb-6">
               <span class="text-6xl block mb-4">${quiz.isFinal ? '🏆' : '❓'}</span>
@@ -2215,7 +2340,7 @@ const renderQuizModal = () => {
               <p class="text-slate-300">${quiz.isFinal ? 'Trả lời đúng để nhận phần thưởng!' : 'Củng cố hiểu biết của bạn'}</p>
             </div>
 
-            <div class="bg-slate-700/50 rounded-xl p-6 mb-6 border border-slate-600/50">
+            <div class="bg-slate-700/70 rounded-xl p-6 mb-6 border border-slate-600/50">
               <p class="text-lg font-medium text-center text-slate-100">${quiz.question.question}</p>
             </div>
 
@@ -2224,7 +2349,7 @@ const renderQuizModal = () => {
                 <button
                   onclick="answerQuiz(${i})"
                   ${quiz.answered ? 'disabled' : ''}
-                  class="p-4 text-left ${quiz.answered ? (i === quiz.question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
+                  class="p-4 text-left ${quiz.answered ? (i === quiz.question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/80/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
                 >
                   <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span>
                   <span class="text-sm">${choice}</span>
@@ -2251,7 +2376,7 @@ const renderLearningQuizModal = () => {
   const question = quiz.question;
 
   return `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-none flex items-center justify-center z-50 p-6">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-amber-500/50 max-w-2xl w-full shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-4">📚</div>
@@ -2266,7 +2391,7 @@ const renderLearningQuizModal = () => {
               <button
                 onclick="answerLearningQuiz(${i})"
                 ${quiz.answered ? 'disabled' : ''}
-                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
+                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/80/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
               >
                 <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span>
                 <span class="text-sm">${choice}</span>
@@ -2316,7 +2441,7 @@ const renderIntroPage = () => {
   
 </div>
               
-              <div class="mt-6 inline-block px-6 py-2 bg-amber-500/20 border border-amber-500/50 rounded-xl">
+              <div class="mt-6 inline-block px-6 py-2 bg-amber-500/40 border border-amber-500/50 rounded-xl">
                 <p class="text-lg font-bold text-amber-400">${seasonLabel}</p>
                 <p class="text-xs text-slate-400">${hasSave ? 'Có dữ liệu lưu — có thể tiếp tục' : 'Bắt đầu hành trình mới'}</p>
               </div>
@@ -2349,7 +2474,7 @@ const renderIntroPage = () => {
               <button onclick="navigate('home')" class="px-7 py-3 bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all shadow-lg">
                 ${hasSave ? '▶ Tiếp tục hành trình' : '▶ Bắt đầu'}
               </button>
-              <button onclick="openRulesSection('general')" class="px-7 py-3 bg-slate-700/40 hover:bg-slate-700 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-200">
+              <button onclick="openRulesSection('general')" class="px-7 py-3 bg-slate-700/60 hover:bg-slate-700 border border-slate-600/50 rounded-xl font-semibold transition-all text-slate-200">
                 📖 Xem luật chơi
               </button>
             </div>
@@ -2366,7 +2491,7 @@ const renderArgumentQuizModal = () => {
   const question = quiz.question;
 
   return `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-none flex items-center justify-center z-50 p-6">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-amber-500/50 max-w-2xl w-full shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-4">💡</div>
@@ -2381,7 +2506,7 @@ const renderArgumentQuizModal = () => {
               <button
                 onclick="answerArgumentQuiz(${i})"
                 ${quiz.answered ? 'disabled' : ''}
-                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
+                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/80/40 border-slate-600 hover:border-amber-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
               >
                 <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span>
                 <span class="text-sm">${choice}</span>
@@ -2409,7 +2534,7 @@ const renderDebateQuizModal = () => {
   const question = quiz.question;
 
   return `
-    <div class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+    <div class="fixed inset-0 bg-black/80 backdrop-blur-none flex items-center justify-center z-50 p-6">
       <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 border-2 border-purple-500/50 max-w-2xl w-full shadow-2xl">
         <div class="text-center mb-6">
           <div class="text-5xl mb-4">🏆</div>
@@ -2424,7 +2549,7 @@ const renderDebateQuizModal = () => {
               <button
                 onclick="answerDebateQuiz(${i})"
                 ${quiz.answered ? 'disabled' : ''}
-                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/40 border-slate-600 hover:border-purple-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
+                class="w-full p-4 text-left ${quiz.answered ? (i === question.correct ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-700/30 border-slate-600') : 'bg-slate-700/30 hover:bg-slate-600/80/40 border-slate-600 hover:border-purple-500'} border-2 rounded-xl transition-all ${quiz.answered ? 'cursor-default' : ''}"
               >
                 <span class="font-bold mr-2">${String.fromCharCode(65 + i)}.</span>
                 <span class="text-sm">${choice}</span>
@@ -2460,7 +2585,7 @@ const renderRulesPage = () => {
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-8">
           <div class="flex items-center justify-between gap-3 mb-4">
-            <button onclick="navigate('intro')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
+            <button onclick="navigate('intro')" class="px-4 py-2 bg-slate-700/70 hover:bg-slate-700 border border-slate-600/50 rounded-xl transition-all text-sm text-slate-300 hover:text-white">
               ← Về màn hình mở
             </button>
             <div class="flex flex-wrap justify-center gap-2">
@@ -2478,7 +2603,7 @@ const renderRulesPage = () => {
 
         <div class="space-y-6">
           <!-- Mục tiêu -->
-          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-amber-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-amber-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🎯</span>
               <span>Mục tiêu trò chơi</span>
@@ -2496,7 +2621,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Hệ thống mùa -->
-          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-blue-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📅</span>
               <span>Hệ thống mùa và thời gian</span>
@@ -2510,7 +2635,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Học tập -->
-          <div class="${section === 'studying' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-green-500/30 shadow-lg">
+          <div class="${section === 'studying' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-green-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🎓</span>
               <span>Học tập</span>
@@ -2533,7 +2658,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Tranh luận -->
-          <div class="${section === 'debate' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-red-500/30 shadow-lg">
+          <div class="${section === 'debate' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-red-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>🗣️</span>
               <span>Tranh luận</span>
@@ -2565,7 +2690,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Chế tạo -->
-          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-purple-500/30 shadow-lg">
+          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-purple-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📝</span>
               <span>Chế tạo vật phẩm</span>
@@ -2574,13 +2699,13 @@ const renderRulesPage = () => {
               <p><strong class="text-purple-400">Công cụ lập luận:</strong> Tăng chỉ số Lập luận (Persuasion)</p>
               <p><strong class="text-purple-400">Công cụ phòng thủ:</strong> Tăng chỉ số Phòng thủ (Resilience)</p>
               <p><strong class="text-purple-400">Vật phẩm hỗ trợ:</strong> Sử dụng trong tranh luận để phục hồi tự tin hoặc buff</p>
-              <p><strong class="text-purple-400">Giới hạn:</strong> Mỗi vật phẩm chỉ có thể chế tạo 1 lần!</p>
+              <p><strong class="text-purple-400">Giới hạn:</strong> Mỗi vật phẩm có thể chế tạo tối đa 5 lần!</p>
               <p><strong class="text-purple-400">Công thức:</strong> Mỗi công thức yêu cầu các loại sách cụ thể, hãy thu thập đầy đủ để chế tạo</p>
             </div>
           </div>
 
           <!-- Trang bị -->
-          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-yellow-500/30 shadow-lg">
+          <div class="${section === 'collecting' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-yellow-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>⚔️</span>
               <span>Trang bị</span>
@@ -2594,7 +2719,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Boss -->
-          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-orange-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-orange-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>👑</span>
               <span>Boss</span>
@@ -2609,7 +2734,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Chỉ số -->
-          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-cyan-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-cyan-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>📊</span>
               <span>Chỉ số</span>
@@ -2625,7 +2750,7 @@ const renderRulesPage = () => {
           </div>
 
           <!-- Tips -->
-          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-sm rounded-xl p-6 border border-emerald-500/30 shadow-lg">
+          <div class="${section === 'general' ? '' : 'hidden'} bg-gradient-to-br from-slate-800 to-slate-900 backdrop-blur-none rounded-xl p-6 border border-emerald-500/30 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
               <span>💡</span>
               <span>Mẹo chơi</span>
@@ -2700,11 +2825,11 @@ const renderGameOverPage = () => {
               <p class="text-lg text-amber-400 font-bold">Điểm số: ${totalScore.toLocaleString()}</p>
             </div>
 
-            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-sm rounded-2xl p-8 border border-red-500/50 mb-6 shadow-2xl">
+            <div class="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-none rounded-2xl p-8 border border-red-500/50 mb-6 shadow-2xl">
               <h2 class="text-2xl font-bold mb-6 text-center text-red-400">📊 Thống kê người chơi</h2>
               
               <div class="grid md:grid-cols-2 gap-6 mb-6">
-                <div class="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50">
+                <div class="bg-slate-700/70 rounded-xl p-4 border border-slate-600/50">
                   <h3 class="font-bold mb-3 text-amber-400">👤 Thông tin nhân vật</h3>
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -2730,7 +2855,7 @@ const renderGameOverPage = () => {
                   </div>
                 </div>
 
-                <div class="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50">
+                <div class="bg-slate-700/70 rounded-xl p-4 border border-slate-600/50">
                   <h3 class="font-bold mb-3 text-amber-400">🎮 Tiến trình</h3>
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -2757,7 +2882,7 @@ const renderGameOverPage = () => {
                 </div>
               </div>
 
-              <div class="bg-slate-700/50 rounded-xl p-4 border border-slate-600/50 mb-6">
+              <div class="bg-slate-700/70 rounded-xl p-4 border border-slate-600/50 mb-6">
                 <h3 class="font-bold mb-3 text-amber-400">📈 Chi tiết điểm số</h3>
                 <div class="space-y-2 text-sm">
                   <div class="flex justify-between">
