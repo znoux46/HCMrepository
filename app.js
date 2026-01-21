@@ -1361,15 +1361,21 @@ const renderHomePage = () => {
               ` : ''}
             </div>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
-              <button onclick="openCrafting()" class="p-4 bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/40 rounded-xl transition-all card-hover">
-                <span class="text-3xl block mb-2">📝</span>
-                <span class="font-bold">Soạn luận cứ</span>
-              </button>
-              <button onclick="navigate('inventory')" class="p-4 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-xl transition-all card-hover">
-                <span class="text-3xl block mb-2">📚</span>
-                <span class="font-bold">Kho học liệu</span>
-              </button>
+            <div class="flex gap-6 mb-6">
+              <div class="tooltip flex-1">
+                <button onclick="openCrafting()" class="w-full p-6 bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/40 rounded-xl transition-all card-hover">
+                  <span class="text-4xl block mb-3">📝</span>
+                  <span class="font-bold text-lg">Soạn luận cứ</span>
+                </button>
+                <span class="tooltip-text">Chế tạo công cụ lập luận và vật phẩm hỗ trợ từ học liệu thu thập được</span>
+              </div>
+              <div class="tooltip flex-1">
+                <button onclick="navigate('inventory')" class="w-full p-6 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-xl transition-all card-hover">
+                  <span class="text-4xl block mb-3">📚</span>
+                  <span class="font-bold text-lg">Kho học liệu</span>
+                </button>
+                <span class="tooltip-text">Xem và trang bị học liệu, công cụ lập luận, và di tích</span>
+              </div>
             </div>
 
             <h3 class="text-2xl font-bold mb-4 flex items-center gap-2">
@@ -1749,11 +1755,26 @@ const renderDebatePage = () => {
                   }).slice(0, 5).map(([id, count]) => {
                     const item = gameData.items[id];
                     if (!item) return '';
+                    const rarityColor = getRarityColor(item.rarity);
                     return `
-                      <button onclick="useItem('${id}')" class="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-600 rounded-lg transition-all">
-                        <span class="text-2xl">${item.icon}</span>
-                        <span class="ml-2 text-sm">${count}</span>
-                      </button>
+                      <div class="group relative">
+                        <button onclick="useItem('${id}')" class="px-4 py-2 ${getRarityBg(item.rarity)} border rounded-lg transition-all hover:scale-105">
+                          <span class="text-2xl">${item.icon}</span>
+                          <span class="ml-2 text-sm">×${count}</span>
+                        </button>
+                        <div class="absolute left-0 top-full mt-1 w-64 p-3 bg-slate-800 border border-blue-500/40 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                          <div class="flex items-start justify-between mb-2">
+                            <span class="text-lg">${item.icon}</span>
+                            <span class="text-xs ${rarityColor} font-bold">${item.rarity ? item.rarity.toUpperCase() : ''}</span>
+                          </div>
+                          <h4 class="font-bold text-sm mb-1">${item.name}</h4>
+                          <p class="text-xs text-slate-300 mb-2">${item.description}</p>
+                          ${item.focusBoost ? `<p class="text-xs text-emerald-400 mb-1">☕ +${item.focusBoost} Tự tin</p>` : ''}
+                          ${item.clarityBoost ? `<p class="text-xs text-cyan-400 mb-1">💧 +${item.clarityBoost} Minh mẫn</p>` : ''}
+                          ${item.persuasionBoost ? `<p class="text-xs text-amber-400 mb-1">✨ +${item.persuasionBoost} Thuyết phục (${item.duration} trận)</p>` : ''}
+                          ${item.resilienceBoost ? `<p class="text-xs text-cyan-400 mb-1">💪 +${item.resilienceBoost} Kiên định (${item.duration} trận)</p>` : ''}
+                        </div>
+                      </div>
                     `;
                   }).filter(Boolean).join('')}
                 </div>
