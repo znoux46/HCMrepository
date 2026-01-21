@@ -79,7 +79,7 @@ const store = createStore({
     exp: 0,
     maxConfidence: 100,
     currentConfidence: 100,
-    basePersuasion: 10,
+    basePersuasion: 12,
     baseResilience: 8,
     argument: null,
     defense: null,
@@ -240,8 +240,8 @@ const gainExp = (amount) => {
     scholar.level++;
     scholar.maxConfidence += 20;
     scholar.currentConfidence = scholar.maxConfidence;
-    scholar.basePersuasion += 3;
-    scholar.baseResilience += 2;
+    scholar.basePersuasion += 4;
+    scholar.baseResilience += 3;
     showToast(`🎓 Lên cấp ${scholar.level}! Hiểu biết sâu sắc hơn`, 'success');
 
     // All provinces are already unlocked, no level requirement
@@ -381,9 +381,9 @@ const showBossEncounter = (seasonIndex) => {
     const defaultBoss = {
       name: bossNamesByYear[year] || `Boss ${seasonName}`,
       icon: "👑",
-      baseConfidence: 60 + (60 * (seasonIndex /4) * 0.7),
-      basePersuasion: 14 + (14 * (seasonIndex /4) * 0.7),
-      baseResilience: 12 + (12 * (seasonIndex /4) * 0.7),
+      baseConfidence: 60 + (60 * (seasonIndex /4) * 0.1),
+      basePersuasion: 14 + (14 * (seasonIndex /4) * 0.1),
+      baseResilience: 12 + (12 * (seasonIndex /4) * 0.1),
       exp: 100,
       topic: `Thử thách cuối năm ${year}`,
       correctAnswer: "Kiên trì học tập và rèn luyện",
@@ -431,10 +431,10 @@ const showBossEncounter = (seasonIndex) => {
     name: bossTitle,
     icon: bossData.icon,
     topic: bossData.topic,
-    maxConfidence: 60 + (60 * (seasonIndex / 4) * 0.7),
-    currentConfidence: 60 + (60 * (seasonIndex / 4) * 0.7),
-    persuasion: 14 + (14 * (seasonIndex / 4) * 0.7),
-    resilience: 12 + (12 * (seasonIndex / 4) * 0.7),
+    maxConfidence: 60 + (60 * (seasonIndex / 4) * 0.1),
+    currentConfidence: 60 + (60 * (seasonIndex / 4) * 0.1),
+    persuasion: 14 + (14 * (seasonIndex / 4) * 0.1),
+    resilience: 12 + (12 * (seasonIndex / 4) * 0.1),
     exp: bossData.exp,
     knowledge: bossData.knowledge || [],
     correctAnswer: bossData.correctAnswer,
@@ -993,7 +993,7 @@ window.answerDebateQuiz = (choiceIndex) => {
         });
 
         const dropRate = currentOpponent.isBoss ? 0.5 : 0.1; // Higher rate for boss
-        if (landmarkItems.length > 0 && Math.random() < dropRate) {
+        if (landmarkItems.length > 0 && Math.random() < dropRate * 2) {
           const randomLandmark = landmarkItems[Math.floor(Math.random() * landmarkItems.length)];
           addToInventory(randomLandmark, 1);
           const toastMessage = currentOpponent.isBoss ? `🏆 Đánh bại Boss! Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}` : `🏛️ Nhận được Di tích ${gameData.items[randomLandmark].icon} ${gameData.items[randomLandmark].name}`;
