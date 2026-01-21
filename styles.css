@@ -10,11 +10,11 @@ body {
   font-family: 'Crimson Pro', serif;
 }
 @keyframes fadeIn {
-  from { opacity: 1; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideIn {
-  from { opacity: 1; transform: translateX(-20px); }
+  from { opacity: 0; transform: translateX(-20px); }
   to { opacity: 1; transform: translateX(0); }
 }
 @keyframes glow {

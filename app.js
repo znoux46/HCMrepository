@@ -2416,7 +2416,7 @@ const renderIntroPage = () => {
   const seasonLabel = getSeasonName((saved && typeof saved.season === 'number') ? saved.season : 0);
 
   return `
-        <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
+        <div class="min-h-full p-6 bg-[url('./image/Hoa-sen.jpg')] bg-cover bg-center bg-fixed">
           <div class="max-w-4xl mx-auto">
             <div class="text-center mb-10">
               <h1 class="text-4xl md:text-5xl font-extrabold mb-3 bg-gradient-to-r from-rose-400 via-amber-400 to-red-400 bg-clip-text text-transparent font-sans tracking-tight">
@@ -2427,43 +2427,46 @@ const renderIntroPage = () => {
               </h1>
               <div class="space-y-6 text-justify"> 
   
-  <p class="text-slate-300 text-lg md:text-xl">
-    Bạn không bắt đầu trong một cung điện. Bạn bắt đầu trong một thư viện cũ kỹ, nơi mùi giấy mục và mực in hòa quyện thành thứ hương vị của thời gian. Bạn là một Học viên của Thời đại — một linh hồn trẻ tuổi mang trong mình tham vọng xoay chuyển bánh xe tư tưởng của quốc gia.
-  </p>
-
-  <p class="text-slate-300 text-lg md:text-xl">
-    Mục tiêu của bạn là thu thập những "vũ khí" đầu tiên: Dữ liệu và Sự thật. Bạn bắt đầu bước ra khỏi thư viện để đến với các diễn đàn học thuật, nơi những bộ óc sắc bén nhất tranh đấu. Khi mùa đông của sự khổ luyện kết thúc, cánh cửa của Quốc hội mở ra. Trước mặt bạn là hàng trăm đại biểu — những người nắm giữ huyết mạch của quốc gia.
-  </p>
-
-  <p class="text-slate-300 text-lg md:text-xl italic mt-10 pl-4 border-l-2 border-slate-500">
-    "Thưa các vị, luật lệ được viết trên giấy, nhưng tương lai được viết bằng tư tưởng. Nếu chúng ta chỉ nhìn vào mặt đất dưới chân, chúng ta sẽ mãi mãi đi vòng quanh một cái hố."
-  </p>
   
+  <div class="mt-6 inline-block px-6 py-2 bg-blue-950/85 border border-amber-500/50 rounded-xl">
+    <p class="text-slate-300 text-lg md:text-xl">
+      Bạn không bắt đầu trong một cung điện. Bạn bắt đầu trong một thư viện cũ kỹ, nơi mùi giấy mục và mực in hòa quyện thành thứ hương vị của thời gian. Bạn là một Học viên của Thời đại — một linh hồn trẻ tuổi mang trong mình tham vọng xoay chuyển bánh xe tư tưởng của quốc gia.
+    </p>
+
+    <p class="text-slate-300 text-lg md:text-xl">
+      Mục tiêu của bạn là thu thập những "vũ khí" đầu tiên: Dữ liệu và Sự thật. Bạn bắt đầu bước ra khỏi thư viện để đến với các diễn đàn học thuật, nơi những bộ óc sắc bén nhất tranh đấu. Khi mùa đông của sự khổ luyện kết thúc, cánh cửa của Quốc hội mở ra. Trước mặt bạn là hàng trăm đại biểu — những người nắm giữ huyết mạch của quốc gia.
+    </p>
+
+    <p class="text-slate-300 text-lg md:text-xl italic mt-10 pl-4 border-l-2 border-slate-500">
+      "Một năm khởi đầu từ mùa xuân. Một đời khởi đầu từ tuổi trẻ. Tuổi trẻ là mùa xuân của xã hội" - Hồ Chí Minh
+    </p>
+  </div>
+
 </div>
               
-              <div class="mt-6 inline-block px-6 py-2 bg-amber-500/40 border border-amber-500/50 rounded-xl">
-                <p class="text-lg font-bold text-amber-400">${seasonLabel}</p>
-                <p class="text-xs text-slate-400">${hasSave ? 'Có dữ liệu lưu — có thể tiếp tục' : 'Bắt đầu hành trình mới'}</p>
+              <div class="mt-6 inline-block px-6 py-2 bg-amber-500/85 border border-amber-500/50 rounded-xl">
+                <p class="text-lg font-bold text-white-400">${seasonLabel}</p>
+                <p class="text-xs text-white-400">${hasSave ? 'Có dữ liệu lưu — có thể tiếp tục' : 'Bắt đầu hành trình mới'}</p>
               </div>
             </div>
 
             <div class="grid md:grid-cols-2 gap-4 mb-8">
-              <button onclick="openRulesSection('general')" class="p-5 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 hover:from-blue-600/30 hover:to-cyan-600/30 border border-blue-500/40 rounded-xl transition-all card-hover text-left">
+              <button onclick="openRulesSection('general')" class="p-5 bg-gradient-to-r from-blue-600/60 to-cyan-600/60 hover:from-blue-600/70 hover:to-cyan-600/70 border border-blue-500/40 rounded-xl transition-all card-hover text-left">
                 <div class="text-3xl mb-2">📘</div>
                 <div class="font-bold text-lg">Luật chung</div>
                 <div class="text-sm text-slate-300 mt-1">Mục tiêu, thời gian, chỉ số, mẹo chơi</div>
               </button>
-              <button onclick="openRulesSection('studying')" class="p-5 bg-gradient-to-r from-emerald-600/20 to-green-600/20 hover:from-emerald-600/30 hover:to-green-600/30 border border-emerald-500/40 rounded-xl transition-all card-hover text-left">
+              <button onclick="openRulesSection('studying')" class="p-5 bg-gradient-to-r from-emerald-600/60 to-green-600/60 hover:from-emerald-600/70 hover:to-green-600/70 border border-emerald-500/40 rounded-xl transition-all card-hover text-left">
                 <div class="text-3xl mb-2">🎓</div>
                 <div class="font-bold text-lg">Học tập</div>
                 <div class="text-sm text-slate-300 mt-1">Chọn tỉnh, học, câu hỏi kiểm tra</div>
               </button>
-              <button onclick="openRulesSection('collecting')" class="p-5 bg-gradient-to-r from-amber-600/20 to-orange-600/20 hover:from-amber-600/30 hover:to-orange-600/30 border border-amber-500/40 rounded-xl transition-all card-hover text-left">
+              <button onclick="openRulesSection('collecting')" class="p-5 bg-gradient-to-r from-amber-600/60 to-orange-600/60 hover:from-amber-600/70 hover:to-orange-600/70 border border-amber-500/40 rounded-xl transition-all card-hover text-left">
                 <div class="text-3xl mb-2">📚</div>
                 <div class="font-bold text-lg">Thu thập học liệu &amp; Soạn luận cứ</div>
                 <div class="text-sm text-slate-300 mt-1">Sách theo vùng, công thức chế tạo</div>
               </button>
-              <button onclick="openRulesSection('debate')" class="p-5 bg-gradient-to-r from-rose-600/20 to-red-600/20 hover:from-rose-600/30 hover:to-red-600/30 border border-rose-500/40 rounded-xl transition-all card-hover text-left">
+              <button onclick="openRulesSection('debate')" class="p-5 bg-gradient-to-r from-rose-600/60 to-red-600/60 hover:from-rose-600/70 hover:to-red-600/70 border border-rose-500/40 rounded-xl transition-all card-hover text-left">
                 <div class="text-3xl mb-2">🗣️</div>
                 <div class="font-bold text-lg">Tranh luận</div>
                 <div class="text-sm text-slate-300 mt-1">Đưa ra lập luận, vật phẩm hỗ trợ</div>
@@ -2581,7 +2584,7 @@ const renderRulesPage = () => {
     }`;
 
   return `
-    <div class="min-h-full p-6 bg-gradient-to-br from-slate-900 via-red-950 to-slate-900">
+    <div class="min-h-full p-6 bg-[url('./image/Hoa-sen.jpg')] bg-cover bg-center bg-fixed">
       <div class="max-w-4xl mx-auto">
         <div class="text-center mb-8">
           <div class="flex items-center justify-between gap-3 mb-4">
