@@ -79,7 +79,7 @@ const store = createStore({
     exp: 0,
     maxConfidence: 100,
     currentConfidence: 100,
-    basePersuasion: 10,
+    basePersuasion: 12,
     baseResilience: 8,
     argument: null,
     defense: null,
@@ -240,8 +240,8 @@ const gainExp = (amount) => {
     scholar.level++;
     scholar.maxConfidence += 20;
     scholar.currentConfidence = scholar.maxConfidence;
-    scholar.basePersuasion += 3;
-    scholar.baseResilience += 2;
+    scholar.basePersuasion += 4;
+    scholar.baseResilience += 3;
     showToast(`🎓 Lên cấp ${scholar.level}! Hiểu biết sâu sắc hơn`, 'success');
 
     // All provinces are already unlocked, no level requirement
