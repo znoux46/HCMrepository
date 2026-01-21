@@ -20,6 +20,7 @@ const createMapCanvas = () => {
   let geoData = null;
   let hoveredProvince = null;
   let selectedProvince = null;
+  let currentFilter = []; // Array of knowledge areas to filter by
   
   // Bảng màu pixel art đẹp mắt cho từng vùng
   const regionColors = {
@@ -161,15 +162,36 @@ const createMapCanvas = () => {
     }
   ];
 
-  // Load GeoJSON data
+  // Update currentFilter based on store state
+  const updateFilter = () => {
+    if (window.store) {
+      const state = window.store.getState();
+      currentFilter = state.knowledgeFilter || [];
+      drawMap(); // Redraw map when filter changes
+    }
+  };
+
+  // Load GeoJSON data from file
   const loadGeoData = async () => {
     try {
       const response = await fetch('VietNamMap.json');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       geoData = await response.json();
-      console.log('GeoJSON loaded:', geoData);
+      console.log('✅ Đã tải dữ liệu bản đồ thành công:', geoData.features.length, 'tỉnh');
+
+      // Initial filter update
+      updateFilter();
+
+      // Subscribe to store changes to update filter
+      if (window.store) {
+        window.store.subscribe(updateFilter);
+      }
+
       drawMap();
     } catch (error) {
-      console.error('Error loading GeoJSON:', error);
+      console.error('❌ Lỗi khi tải dữ liệu bản đồ:', error);
       drawErrorMessage();
     }
   };
@@ -263,14 +285,14 @@ const createMapCanvas = () => {
   // Vẽ bản đồ
   const drawMap = () => {
     if (!geoData) return;
-    
+
     // Clear canvas với gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#0f172a');  // Slate 900
     gradient.addColorStop(1, '#1e293b');  // Slate 800
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Vẽ title
     ctx.save();
     ctx.fillStyle = '#fbbf24';
@@ -278,31 +300,42 @@ const createMapCanvas = () => {
     ctx.textAlign = 'center';
     ctx.fillText('🇻🇳 BẢN ĐỒ VIỆT NAM', canvas.width / 2, 35);
     ctx.restore();
-    
+
     // Vẽ tất cả các tỉnh
     geoData.features.forEach(feature => {
       const provinceName = feature.properties.VARNAME_1 || feature.properties.NAME_1;
       const isHovered = hoveredProvince === provinceName;
       const isSelected = selectedProvince === provinceName;
-      
+
+      // Check if province matches the current filter
+      const provinceId = provinceNameToId[provinceName];
+      const province = provinceId ? window.gameData?.provinces?.find(p => p.id === provinceId) : null;
+      const shouldHighlight = currentFilter.length === 0 || (province && province.knowledgeAreas && province.knowledgeAreas.some(area => currentFilter.includes(area)));
+
       const state = isSelected ? 'selected' : isHovered ? 'hover' : 'base';
-      const fillColor = getProvinceColor(provinceName, state);
+      let fillColor = getProvinceColor(provinceName, state);
+
+      // Apply filter: if filter is active and province doesn't match, use gray color
+      if (currentFilter.length > 0 && !shouldHighlight) {
+        fillColor = '#e5e7eb'; // Gray for filtered out provinces
+      }
+
       const borderColor = getProvinceColor(provinceName, 'border');
       const lineWidth = isSelected ? 4 : isHovered ? 3 : 2;
-      
+
       drawPixelPolygon(feature.geometry.coordinates, fillColor, borderColor, lineWidth);
-      
+
       // Vẽ label cho tỉnh đang hover hoặc selected
       if (isHovered || isSelected) {
         const centroid = getPolygonCentroid(feature.geometry.coordinates);
         if (centroid) {
           const [cx, cy] = projectToCanvas(centroid[0], centroid[1]);
-          
+
           // Background cho text (pixel style)
           const displayName = feature.properties.NAME_1;
           ctx.font = 'bold 13px monospace';
           const textWidth = ctx.measureText(displayName).width;
-          
+
           ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
           const boxPadding = 6;
           ctx.fillRect(
@@ -311,7 +344,7 @@ const createMapCanvas = () => {
             Math.ceil(textWidth + boxPadding * 2),
             22
           );
-          
+
           // Border cho text box
           ctx.strokeStyle = '#fbbf24';
           ctx.lineWidth = 2;
@@ -321,7 +354,7 @@ const createMapCanvas = () => {
             Math.ceil(textWidth + boxPadding * 2),
             22
           );
-          
+
           // Text
           ctx.fillStyle = '#ffffff';
           ctx.textAlign = 'center';
@@ -330,10 +363,10 @@ const createMapCanvas = () => {
         }
       }
     });
-    
+
     // Vẽ các quần đảo Hoàng Sa và Trường Sa
     drawIslands();
-    
+
     // Vẽ legend
     drawLegend();
   };
@@ -598,11 +631,22 @@ const createMapCanvas = () => {
       const book = window.gameData?.items?.[bookKey];
       return book ? { icon: book.icon, name: book.name } : null;
     }).filter(Boolean) || [];
-    
+
     const uniqueItemsList = province.uniqueItems?.map(itemId => {
       const item = window.gameData?.items?.[itemId];
       return item ? { icon: item.icon, name: item.name, rarity: item.rarity } : null;
     }).filter(Boolean) || [];
+
+    // Lấy thông tin công cụ được sử dụng làm nguyên liệu (tools used as materials in recipes)
+    const toolMaterials = Object.values(window.gameData?.items || {}).filter(item => {
+      // Check if this item is used as a material in any recipe
+      return Object.values(window.gameData?.items || {}).some(otherItem =>
+        otherItem.recipe && Object.keys(otherItem.recipe).includes(item.id)
+      ) &&
+      !item.name.toLowerCase().includes('book') &&
+      !item.name.toLowerCase().includes('paper') &&
+      !item.name.toLowerCase().includes('tờ');
+    });
     
     tooltip.innerHTML = `
       <div class="flex items-center gap-2 mb-2">
@@ -614,7 +658,7 @@ const createMapCanvas = () => {
       <div class="text-xs text-slate-400 mb-2">
         <span>⭐ Cấp ${province.difficulty || 1}</span>
       </div>
-      
+
       ${knowledgeBooks.length > 0 ? `
         <div class="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
           <p class="text-xs font-semibold text-blue-400 mb-1">📚 Sách có thể nhận:</p>
@@ -624,7 +668,17 @@ const createMapCanvas = () => {
           <p class="text-xs text-slate-400">${knowledgeBooks.map(b => b.name).join(', ')}</p>
         </div>
       ` : ''}
-      
+
+      ${toolMaterials.length > 0 ? `
+        <div class="mb-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <p class="text-xs font-semibold text-blue-400 mb-1">🔧 Công cụ nguyên liệu:</p>
+          <div class="flex flex-wrap gap-1 mb-1">
+            ${toolMaterials.map(tool => `<span class="text-xs px-1.5 py-0.5 bg-blue-500/20 border border-blue-500/40 rounded" title="${tool.name}">${tool.icon}</span>`).join('')}
+          </div>
+          <p class="text-xs text-slate-400">${toolMaterials.map(t => t.name).join(', ')}</p>
+        </div>
+      ` : ''}
+
       ${uniqueItemsList.length > 0 ? `
         <div class="mb-2 p-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
           <p class="text-xs font-semibold text-purple-400 mb-1">⭐ Item đặc biệt:</p>
@@ -640,7 +694,7 @@ const createMapCanvas = () => {
           <p class="text-xs text-slate-400">${uniqueItemsList.map(i => i.name).join(', ')}</p>
         </div>
       ` : ''}
-      
+
       ${progress ? `
         <div class="mb-2 text-xs text-slate-300 space-y-1 border-t border-slate-600/50 pt-2">
           <div class="flex justify-between">
@@ -653,7 +707,7 @@ const createMapCanvas = () => {
           </div>
         </div>
       ` : ''}
-      
+
       <div class="text-xs text-amber-400 mt-2 border-t border-slate-600/50 pt-2">
         Click để khám phá
       </div>

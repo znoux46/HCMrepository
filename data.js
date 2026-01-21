@@ -95,7 +95,7 @@ window.gameData = {
     ethics_book: { name: "Sách Đạo đức", icon: "✨", type: "knowledge", rarity: "common", area: "ethics", points: 5 },
     sports_book: { name: "Sách Thể thao", icon: "⚽", type: "knowledge", rarity: "common", area: "sports", points: 5 },
 
-    research_paper: { name: "Bài nghiên cứu", icon: "📄", type: "knowledge", rarity: "uncommon", area: "general", points: 10 },
+    research_paper: { name: "Bài nghiên cứu", icon: "📄", type: "knowledge", rarity: "common", area: "general", points: 5 },
     documentary: { name: "Phim tài liệu", icon: "🎞️", type: "knowledge", rarity: "uncommon", area: "general", points: 10 },
     interview_record: { name: "Bản phỏng vấn", icon: "🎤", type: "knowledge", rarity: "rare", area: "general", points: 15 },
 
@@ -531,7 +531,7 @@ window.gameData = {
     },
     // Boss opponents
     tri_nhan: {
-      name: "Đại biểu Kỳ họp thứ 4, Quốc hội khóa XVI",
+      name: "Trí Nhân",
       icon: "👑",
       baseConfidence: 68,
       basePersuasion: 15,
@@ -546,7 +546,7 @@ window.gameData = {
       // dropItems: ["ho_chi_minh_mausoleum", "one_pillar_pagoda", "temple_of_literature"]
     },
     nguyen_vu: {
-      name: "Đại biểu Kỳ họp thứ 6, Quốc hội khóa XVI",
+      name: "Nguyên Vũ",
       icon: "👑",
       baseConfidence: 100,
       basePersuasion: 20,
@@ -561,7 +561,7 @@ window.gameData = {
       // dropItems: ["imperial_city", "thien_mu_pagoda", "hoi_an_ancient_town"]
     },
     hoang_nguyen: {
-      name: "Đại biểu Kỳ họp thứ 8, Quốc hội khóa XVI",
+      name: "Hoàng Nguyên",
       icon: "👑",
       baseConfidence: 102,
       basePersuasion: 19,
